@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>DGM - Bethel Church Trust®</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- html2pdf.js for client-side PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Noto+Sans+Kannada:wght@400;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
+
+    body { font-family: 'Poppins', 'Noto Sans Kannada', sans-serif; }
+    .cinzel { font-family: 'Cinzel', serif; }
+    .kannada { font-family: 'Noto Sans Kannada', sans-serif; }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+
+    @page {
+      size: A4 portrait;
+      margin: 8mm;
+    }
+    @media print {
+      html, body {
+        height: auto !important;
+        overflow: visible !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+      body * { visibility: hidden !important; }
+      #printableArea, #printableArea * { visibility: visible !important; }
+      #printableArea {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 5mm !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        box-shadow: none !important;
+        page-break-after: avoid !important;
+        page-break-inside: avoid !important;
+      }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen relative overflow-x-hidden select-none antialiased">
+
+  <!-- SVG EMBLEM TEMPLATE -->
+  <template id="dgmLogoSvg">
+    <svg viewBox="0 0 240 240" class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="120" cy="120" r="118" fill="#ffffff" stroke="#c5161d" stroke-width="4"/>
+      <circle cx="120" cy="120" r="111" fill="#0d0d0d"/>
+      
+      <path id="topTextArc" d="M 30 120 A 90 90 0 0 1 210 120" fill="none"/>
+      <text font-family="'Cinzel', serif" font-size="14.5" font-weight="900" fill="#ffffff" letter-spacing="3.5">
+        <textPath href="#topTextArc" startOffset="50%" text-anchor="middle">DIVINE GENERATION MINISTRIES</textPath>
+      </text>
+
+      <circle cx="120" cy="118" r="66" fill="#fdf0e2" stroke="#bf2619" stroke-width="2"/>
+      
+      <g fill="none" stroke="#d42617" stroke-width="4.5" stroke-linecap="round" opacity="0.95">
+        <path d="M 120 54 C 150 66, 182 92, 172 126"/>
+        <path d="M 186 118 C 176 150, 146 176, 112 176"/>
+        <path d="M 120 182 C 84 176, 60 146, 66 114"/>
+        <path d="M 54 118 C 60 86, 90 60, 120 54"/>
+      </g>
+
+      <rect x="105" y="86" width="30" height="42" fill="#ffffff" stroke="#111111" stroke-width="2.5"/>
+      <polygon points="120,68 105,86 135,86" fill="#ffffff" stroke="#111111" stroke-width="2.5"/>
+      <line x1="120" y1="60" x2="120" y2="68" stroke="#111111" stroke-width="2.5"/>
+      <line x1="116" y1="63" x2="124" y2="63" stroke="#111111" stroke-width="2.5"/>
+
+      <rect x="88" y="97" width="17" height="31" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+      <polygon points="96.5,86 88,97 105,97" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+      <rect x="135" y="97" width="17" height="31" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+      <polygon points="143.5,86 135,97 152,97" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+
+      <path d="M 112 105 A 8 8 0 0 1 128 105 V 128 H 112 Z" fill="none" stroke="#111111" stroke-width="2"/>
+      <path d="M 92 110 A 4.5 4.5 0 0 1 101 110 V 128 H 92 Z" fill="none" stroke="#111111" stroke-width="1.8"/>
+      <path d="M 139 110 A 4.5 4.5 0 0 1 148 110 V 128 H 139 Z" fill="none" stroke="#111111" stroke-width="1.8"/>
+
+      <g fill="#111111">
+        <circle cx="103" cy="135" r="3.2"/>
+        <circle cx="120" cy="133" r="3.6"/>
+        <circle cx="137" cy="135" r="3.2"/>
+        <circle cx="111" cy="142" r="2.8"/>
+        <circle cx="129" cy="142" r="2.8"/>
+      </g>
+      <g fill="none" stroke="#111111" stroke-width="1.6">
+        <path d="M 98 147 Q 103 140 108 147 Z"/>
+        <path d="M 114 146 Q 120 138 126 146 Z"/>
+        <path d="M 132 147 Q 137 140 142 147 Z"/>
+      </g>
+
+      <circle cx="50" cy="151" r="5" fill="#c5161d"/>
+      <circle cx="190" cy="151" r="5" fill="#c5161d"/>
+
+      <path id="bottomTextArc" d="M 45 130 A 84 84 0 0 0 195 130" fill="none"/>
+      <text font-family="'Cinzel', serif" font-size="20" font-weight="900" fill="#ffffff" letter-spacing="5">
+        <textPath href="#bottomTextArc" startOffset="50%" text-anchor="middle">BETHEL</textPath>
+      </text>
+
+      <path id="sloganArc" d="M 15 135 A 108 108 0 0 0 225 135" fill="none"/>
+      <text font-family="'Poppins', sans-serif" font-size="9" font-weight="600" fill="#999999" letter-spacing="1">
+        <textPath href="#sloganArc" startOffset="50%" text-anchor="middle">..building Godly Generation!</textPath>
+      </text>
+    </svg>
+  </template>
+
+  <!-- ================= PORTAL LOCK SCREEN MODAL ================= -->
+  <div id="lockScreenModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-md p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl">
+      <div class="w-20 h-20 mx-auto mb-4 bg-white rounded-full p-1 shadow border-2 border-red-600 logo-insert"></div>
+      <h2 class="cinzel text-base sm:text-lg font-bold text-amber-400 tracking-wider mb-5">DGM - BETHEL CHURCH</h2>
+      <form onsubmit="handleUnlock(event)" class="space-y-4">
+        <div>
+          <input type="password" id="accessPasscode" autocomplete="off" autofocus placeholder="Enter Portal Passcode"
+            class="w-full bg-slate-800 text-center text-amber-300 font-semibold tracking-widest px-4 py-3 rounded-lg border border-slate-700 focus:border-amber-400 focus:outline-none text-sm">
+        </div>
+        <p id="lockError" class="text-xs text-red-400 hidden"><i class="fa-solid fa-circle-exclamation mr-1"></i> Authentication failed</p>
+        <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold py-3 rounded-lg transition duration-200 text-xs tracking-wider uppercase shadow">
+          <i class="fa-solid fa-lock-open mr-1.5"></i> Unlock Portal
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= SEARCH AUTH MODAL (jesus2coming) ================= -->
+  <div id="searchAuthModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-md p-4 hidden">
+    <div class="bg-slate-900 border border-amber-500/50 rounded-2xl p-6 sm:p-7 max-w-sm w-full text-center shadow-2xl">
+      <div class="w-12 h-12 mx-auto mb-3 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center text-xl">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+      <h3 class="cinzel text-sm sm:text-base font-bold text-amber-400 tracking-wider mb-1">SEARCH DIRECTORY ACCESS</h3>
+      <p class="text-[11px] text-slate-400 mb-4">Enter authorized passcode to search and access records</p>
+      <form onsubmit="handleSearchUnlock(event)" class="space-y-3.5">
+        <div>
+          <input type="password" id="searchAccessPasscode" autocomplete="off" placeholder="Enter Search Passcode"
+            class="w-full bg-slate-800 text-center text-amber-300 font-semibold tracking-widest px-4 py-2.5 rounded-lg border border-slate-700 focus:border-amber-400 focus:outline-none text-xs">
+        </div>
+        <p id="searchLockError" class="text-xs text-red-400 hidden"><i class="fa-solid fa-circle-exclamation mr-1"></i> Invalid passcode</p>
+        <div class="flex space-x-2">
+          <button type="button" onclick="closeSearchAuthModal()" class="w-1/2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2 rounded-lg text-xs">
+            Cancel
+          </button>
+          <button type="submit" class="w-1/2 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold py-2 rounded-lg text-xs uppercase shadow">
+            Confirm
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= IMAGE ENLARGE / ZOOM MODAL ================= -->
+  <div id="imageZoomModal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 hidden">
+    <div class="relative bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-4 flex flex-col items-center shadow-2xl">
+      <button onclick="closeImageZoomModal()" class="absolute top-3 right-3 text-slate-400 hover:text-white text-xl p-1 z-10">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <h4 id="zoomModalTitle" class="text-xs font-bold text-amber-400 mb-3 truncate max-w-[280px]">Photo Preview</h4>
+      <div class="w-full max-h-[70vh] bg-black/60 rounded-xl overflow-hidden flex items-center justify-center border border-slate-800">
+        <img id="enlargedZoomImg" src="" alt="Enlarged" class="max-h-[68vh] w-auto max-w-full object-contain">
+      </div>
+      <button onclick="closeImageZoomModal()" class="mt-4 px-5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs font-semibold">
+        Close
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= UNIVERSAL SHARE MODAL ================= -->
+  <div id="shareActionModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl p-5 shadow-2xl flex flex-col space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+        <h3 class="text-sm font-bold text-amber-400 flex items-center space-x-2">
+          <i class="fa-solid fa-share-nodes"></i>
+          <span>Share Record / ಹಂಚಿಕೊಳ್ಳಿ</span>
+        </h3>
+        <button onclick="closeShareModal()" class="text-slate-400 hover:text-white text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-300">Choose how to redirect and share:</p>
+
+      <div class="space-y-2.5">
+        <button onclick="executeShare('whatsapp')" class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center justify-center space-x-2 shadow transition">
+          <i class="fa-brands fa-whatsapp text-base"></i>
+          <span>Share via WhatsApp</span>
+        </button>
+
+        <button onclick="executeShare('email')" class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs flex items-center justify-center space-x-2 shadow transition">
+          <i class="fa-solid fa-envelope text-base"></i>
+          <span>Share via Email</span>
+        </button>
+
+        <button onclick="executeShare('copy')" class="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold rounded-xl text-xs flex items-center justify-center space-x-2 transition">
+          <i class="fa-solid fa-copy text-base"></i>
+          <span id="copyBtnText">Copy Message & Link</span>
+        </button>
+      </div>
+
+      <div class="pt-2 text-center">
+        <button onclick="closeShareModal()" class="text-xs text-slate-400 hover:text-slate-200">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MAIN DASHBOARD ================= -->
+  <main class="min-h-screen flex flex-col justify-between items-center p-3 sm:p-8 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-slate-950">
+    <header class="w-full flex justify-between items-center max-w-6xl py-2 border-b border-slate-800">
+      <div class="flex items-center space-x-1.5 text-[11px] sm:text-xs text-slate-400 truncate max-w-[150px] sm:max-w-none">
+        <i class="fa-solid fa-globe text-amber-400"></i>
+        <a href="https://www.dgmbethelchurch.org" target="_blank" class="hover:text-amber-300 transition underline tracking-wider font-medium truncate">www.dgmbethelchurch.org</a>
+      </div>
+      
+      <div class="flex items-center space-x-2 shrink-0">
+        <button onclick="promptSearchAccess()" class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/50 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 shadow-sm">
+          <i class="fa-solid fa-magnifying-glass text-amber-400"></i>
+          <span>Search / ಹುಡುಕಾಟ</span>
+        </button>
+        <button onclick="shareChurchPortal()" class="px-2.5 py-1.5 bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 rounded text-xs font-medium transition border border-emerald-700/60 flex items-center space-x-1">
+          <i class="fa-solid fa-share-nodes"></i>
+          <span>Share</span>
+        </button>
+        <button onclick="handleLogout()" class="px-2.5 py-1.5 bg-slate-800 hover:bg-red-900/60 text-slate-300 hover:text-white rounded text-xs font-medium transition border border-slate-700 flex items-center space-x-1">
+          <i class="fa-solid fa-lock text-red-400"></i>
+          <span>Lock</span>
+        </button>
+      </div>
+    </header>
+
+    <section class="flex flex-col items-center text-center my-auto py-6 max-w-4xl w-full px-2">
+      <div class="w-28 h-28 sm:w-36 sm:h-36 bg-white rounded-full p-1.5 shadow-2xl border-4 border-red-600 mb-4 logo-insert"></div>
+      <h1 class="cinzel text-2xl sm:text-4xl font-black text-amber-400 tracking-wider mb-1">DGM - BETHEL CHURCH TRUST<sup>&reg;</sup></h1>
+      <p class="kannada text-xs sm:text-base font-semibold text-slate-300 mb-3 tracking-wide">ಡಿಜಿಎಮ್ ಬೇತೇಲ್ ಚರ್ಚ್ ಟ್ರಸ್ಟ್ &bull; Form / ನಮೂನೆ</p>
+
+      <div class="bg-slate-800/80 border border-slate-700/80 rounded-xl p-3 text-[11px] sm:text-sm text-slate-300 max-w-xl mx-auto space-y-1 mb-6 shadow-inner">
+        <p class="font-medium text-slate-200">Bethel Road, Yesupura, Innanje Railway Station Road, Innanje Village,</p>
+        <p>Shankarpura Post - 574115, Udupi Dist. Karnataka, India.</p>
+        <p class="text-amber-400 font-semibold pt-0.5"><i class="fa-solid fa-phone mr-1.5"></i> Mobile No: 0091-9902334941</p>
+      </div>
+
+      <div class="flex flex-col justify-center gap-3 w-full max-w-xs">
+        <button onclick="openNewEntryModal()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold px-6 py-3.5 rounded-xl shadow-lg transition duration-200 flex items-center justify-center space-x-2 text-sm">
+          <i class="fa-solid fa-file-circle-plus text-base"></i>
+          <span>New Entry / ಹೊಸ ನೋಂದಣಿ</span>
+        </button>
+      </div>
+
+      <div class="mt-5 text-[11px] text-slate-400 flex items-center justify-center space-x-2">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span id="syncStatus">Google Sheets Live Connected</span>
+      </div>
+    </section>
+
+    <footer class="w-full text-center py-2.5 border-t border-slate-800/80 text-[10px] sm:text-[11px] text-slate-500">
+      &copy; DGM Bethel Church Trust&reg; Shankarpura, Udupi. All Rights Reserved.
+    </footer>
+  </main>
+
+  <!-- ================= REGISTRATION FORM MODAL ================= -->
+  <div id="registrationModal" class="fixed inset-0 z-40 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 hidden">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-4xl max-h-[96vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden">
+      
+      <div class="bg-slate-800 px-3 sm:px-4 py-2.5 sm:py-3 border-b border-slate-700 flex justify-between items-center shrink-0">
+        <div class="flex items-center space-x-2">
+          <div class="w-7 h-7 rounded-full bg-white p-0.5 border border-red-600 logo-insert"></div>
+          <div>
+            <h3 class="text-xs sm:text-sm font-bold text-amber-400" id="formModalTitle">New Entry / ಹೊಸ ನೋಂದಣಿ</h3>
+            <p class="text-[9px] sm:text-[10px] text-slate-400">DGM-Bethel Church Trust Registration</p>
+          </div>
+        </div>
+        <button onclick="closeNewEntryModal()" class="text-slate-400 hover:text-white text-xl p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="registrationForm" onsubmit="handleFormSubmit(event)" class="p-3 sm:p-5 overflow-y-auto space-y-3 text-xs text-slate-200">
+        
+        <!-- Registration Date & Format Preview -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-850 p-2.5 rounded-lg border border-slate-800">
+          <div class="space-y-1 w-full sm:w-auto">
+            <label class="block font-medium text-slate-300 text-[11px]">Date / ದಿನಾಂಕ:</label>
+            <input type="date" id="entryDate" required onchange="updateRegNoPreview()" class="w-full sm:w-auto bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-slate-100 text-xs focus:border-amber-400 focus:outline-none">
+          </div>
+          
+          <div class="text-left sm:text-right">
+            <span class="block text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Registration Number</span>
+            <span id="displayRegId" class="font-mono text-xs font-bold text-amber-400">dgmbc/dd/mm/yyyy/</span>
+          </div>
+
+          <div class="flex items-center space-x-2.5 self-start sm:self-auto">
+            <div id="photoPreviewContainer" class="w-14 h-16 bg-slate-800 border-2 border-dashed border-slate-600 rounded flex items-center justify-center overflow-hidden">
+              <img id="capturedPhotoImg" src="" alt="Photo" class="w-full h-full object-cover hidden">
+              <span id="photoPlaceholder" class="text-[9px] text-slate-400 text-center px-1"><i class="fa-solid fa-user block text-sm"></i>No Photo</span>
+            </div>
+            
+            <div class="space-y-1">
+              <select id="cameraFacingMode" class="bg-slate-800 border border-slate-700 rounded px-1.5 py-1 text-[10px] text-slate-200 block w-full">
+                <option value="user">Front Camera</option>
+                <option value="environment" selected>Rear Camera</option>
+              </select>
+              
+              <div class="flex space-x-1">
+                <button type="button" onclick="startCamera()" class="flex-1 px-2 py-1 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold rounded text-[10px] flex items-center justify-center space-x-1">
+                  <i class="fa-solid fa-camera"></i>
+                  <span>Live</span>
+                </button>
+                <button type="button" onclick="document.getElementById('mobileCameraFile').click()" class="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-amber-300 font-bold rounded text-[10px]" title="Take or upload photo">
+                  <i class="fa-solid fa-upload"></i>
+                </button>
+              </div>
+
+              <input type="file" id="mobileCameraFile" accept="image/*" capture="environment" class="hidden" onchange="handleFileUpload(event)">
+
+              <button type="button" onclick="removePhoto()" id="removePhotoBtn" class="px-2 py-0.5 bg-red-900/60 hover:bg-red-800 text-red-200 rounded text-[9px] hidden w-full">
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Camera Container -->
+        <div id="cameraContainer" class="hidden bg-slate-950 p-2.5 rounded-lg border border-amber-500/50 text-center space-y-2">
+          <video id="cameraVideo" autoplay playsinline muted class="mx-auto w-full max-w-xs h-48 bg-black rounded object-cover"></video>
+          <canvas id="cameraCanvas" class="hidden"></canvas>
+          <div class="flex justify-center space-x-2">
+            <button type="button" onclick="toggleCameraFacing()" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 font-semibold rounded text-xs border border-slate-600 flex items-center space-x-1">
+              <i class="fa-solid fa-arrows-rotate"></i>
+              <span>Flip Cam</span>
+            </button>
+            <button type="button" onclick="takeSnapshot()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded text-xs flex items-center space-x-1">
+              <i class="fa-solid fa-circle-dot"></i>
+              <span>Snap Picture</span>
+            </button>
+            <button type="button" onclick="stopCamera()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs">Cancel</button>
+          </div>
+        </div>
+
+        <!-- Identification & Mobile -->
+        <div class="bg-amber-950/20 border border-amber-500/30 p-2.5 rounded-lg grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <div class="flex justify-between items-center mb-0.5">
+              <label class="font-bold text-amber-400 text-xs">ಆಧಾರ್ ಸಂಖ್ಯೆ / Aadhar No: <span class="text-slate-400 font-normal">(Optional)</span></label>
+              <span class="text-[10px] text-amber-300 italic">Auto-fills on 12 digits</span>
+            </div>
+            <input type="text" id="aadhaarInput" maxlength="12" placeholder="12 Digit Aadhaar"
+              oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 12); if (this.value.length === 12) triggerAutoRefill('aadhaar', this.value);"
+              class="w-full bg-slate-800 border border-amber-500/40 rounded px-2.5 py-2 text-slate-100 font-semibold tracking-wider text-xs focus:border-amber-400 focus:outline-none">
+          </div>
+          <div>
+            <div class="flex justify-between items-center mb-0.5">
+              <label class="font-bold text-amber-400 text-xs">ಮೊಬೈಲ್ ಸಂಖ್ಯೆ / Mobile No (10 Digits): <span class="text-red-400">*</span></label>
+              <span class="text-[10px] text-amber-300 italic">Auto-fills on 10 digits</span>
+            </div>
+            <input type="tel" id="mobileInput" required maxlength="10" pattern="[0-9]{10}" placeholder="Exact 10 digits"
+              oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10); if (this.value.length === 10) triggerAutoRefill('mobile', this.value);"
+              class="w-full bg-slate-800 border border-amber-500/40 rounded px-2.5 py-2 font-mono text-slate-100 text-xs focus:border-amber-400 focus:outline-none">
+          </div>
+          <div class="sm:col-span-2">
+            <p id="refillFeedback" class="text-[11px] text-emerald-400 font-semibold hidden"></p>
+          </div>
+        </div>
+
+        <!-- Name & Relative Name -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div>
+            <label class="block font-medium text-slate-300 mb-0.5">ಹೆಸರು / Full Name: <span class="text-red-400">*</span></label>
+            <input type="text" id="nameInput" required placeholder="Full Name" class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-2 text-xs focus:border-amber-400 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-medium text-slate-300 mb-0.5">ತಂದೆ/ಗಂಡನ ಹೆಸರು / Father/Husband Name:</label>
+            <input type="text" id="relativeNameInput" placeholder="Father / Husband Name" class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-2 text-xs focus:border-amber-400 focus:outline-none">
+          </div>
+        </div>
+
+        <!-- Place & Address, PIN -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <div class="sm:col-span-2">
+            <label class="block font-medium text-slate-300 mb-0.5">ಸ್ಥಳ & ಸಂಪೂರ್ಣ ವಿಳಾಸ / Place & Full Address: <span class="text-red-400">*</span></label>
+            <input type="text" id="addressInput" required placeholder="Place / Street, Village, Post, Town" class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-2 text-xs focus:border-amber-400 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-medium text-slate-300 mb-0.5">ಪಿನ್ ಕೋಡ್ / Pin Code:</label>
+            <input type="text" id="pincodeInput" maxlength="6" placeholder="6-digit PIN" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 6)" class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-2 text-xs focus:border-amber-400 focus:outline-none">
+          </div>
+        </div>
+
+        <!-- Gender & DOB -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div>
+            <label class="block font-medium text-slate-300 mb-0.5">ಲಿಂಗ / Gender:</label>
+            <select id="genderInput" class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-2 text-xs focus:border-amber-400 focus:outline-none">
+              <option value="M">ಗಂಡು / Male</option>
+              <option value="F">ಹೆಣ್ಣು / Female</option>
+              <option value="Other">ಇತರ / Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-medium text-slate-300 mb-0.5">ಹುಟ್ಟಿದ ದಿನಾಂಕ / Date of Birth:</label>
+            <input type="date" id="dobInput" class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-2 text-xs focus:border-amber-400 focus:outline-none">
+          </div>
+        </div>
+
+        <!-- Visitors -->
+        <div class="bg-slate-850 p-2.5 rounded-lg border border-slate-800 space-y-1.5">
+          <label class="block font-medium text-amber-400 text-xs">ನಿಮ್ಮೊಂದಿಗೆ ಬಂದವರ ಹೆಸರು / Visitors with you (Up to 5):</label>
+          <div class="grid grid-cols-1 sm:grid-cols-5 gap-2">
+            <input type="text" id="visitor1" placeholder="1. Visitor" class="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-amber-400 focus:outline-none">
+            <input type="text" id="visitor2" placeholder="2. Visitor" class="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-amber-400 focus:outline-none">
+            <input type="text" id="visitor3" placeholder="3. Visitor" class="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-amber-400 focus:outline-none">
+            <input type="text" id="visitor4" placeholder="4. Visitor" class="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-amber-400 focus:outline-none">
+            <input type="text" id="visitor5" placeholder="5. Visitor" class="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-amber-400 focus:outline-none">
+          </div>
+        </div>
+
+        <!-- Background Questions -->
+        <div class="space-y-2">
+          <div>
+            <label class="block font-medium text-slate-300 mb-0.5">ನಿಮಗೆ ಡಿಜಿಎಮ್ ಬೇತೆಲ್ ಚರ್ಚ್ ಬಗ್ಗೆ ಹೇಗೆ ತಿಳಿದುಕೊಂಡಿರಿ? / How did you know about DGM Bethel Church?</label>
+            <input type="text" id="howKnowInput" class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-2 text-xs focus:border-amber-400 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-medium text-slate-300 mb-0.5">ನೀವು ಡಿಜಿಎಮ್ ಬೇತೆಲ್ ಚರ್ಚ್ಗೆ ಬರುವ ಉದ್ದೇಶವೇನು? / What is the purpose of coming to DGM Bethel Church?</label>
+            <input type="text" id="purposeInput" class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-2 text-xs focus:border-amber-400 focus:outline-none">
+          </div>
+        </div>
+
+        <!-- Faith & Health Questionnaire -->
+        <div class="bg-slate-850 p-2.5 rounded-lg border border-slate-800 space-y-2.5">
+          <h4 class="font-bold text-amber-400 text-xs uppercase tracking-wider">Health & Faith Questions</h4>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
+            <span class="sm:col-span-2 text-[11px] sm:text-xs">ನಿಮಗೆ ಯಾವುದಾದರೂ ಕಾಯಿಲೆ ಇದೆಯಾ? / Suffering from any disease?</span>
+            <div class="flex items-center space-x-1.5">
+              <select id="hasDisease" class="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs shrink-0">
+                <option value="No">ಇಲ್ಲ / No</option>
+                <option value="Yes">ಹೌದು / Yes</option>
+              </select>
+              <input type="text" id="diseaseDetails" placeholder="ಹೌದಾದರೆ ಯಾವುದು? / Details" class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-xs">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
+            <span class="sm:col-span-2 text-[11px] sm:text-xs">ನೀವು ಚಿಕಿತ್ಸೆಯನ್ನು ಪಡೆಯುತ್ತಿದ್ದೀರಾ? / Taking treatment?</span>
+            <div class="flex items-center space-x-1.5">
+              <select id="takingTreatment" class="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs shrink-0">
+                <option value="No">ಇಲ್ಲ / No</option>
+                <option value="Yes">ಹೌದು / Yes</option>
+              </select>
+              <input type="text" id="treatmentDuration" placeholder="ಯಾವಾಗಲಿಂದ? / From when?" class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-xs">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
+            <span class="sm:col-span-2 text-[11px] sm:text-xs">ಚಿಕಿತ್ಸೆಯಿಂದ ಏನಾದರೂ ಸುಧಾರಣೆ ಆಗಿದೆಯಾ? / Improvement in treatment?</span>
+            <select id="treatmentImprovement" class="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs">
+              <option value="No">ಇಲ್ಲ / No</option>
+              <option value="Yes">ಹೌದು / Yes</option>
+            </select>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
+            <span class="sm:col-span-2 text-[11px] sm:text-xs">ದೈವಿಕ ಸ್ವಸ್ಥತೆಯನ್ನು ನಂಬುತ್ತೀರಾ? / Believe in divine healing?</span>
+            <select id="believeHealing" class="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs">
+              <option value="Yes">ಹೌದು / Yes</option>
+              <option value="No">ಇಲ್ಲ / No</option>
+            </select>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
+            <span class="sm:col-span-2 text-[11px] sm:text-xs">ಸ್ವಂತ ಇಷ್ಟದಿಂದ ಪಾಲ್ಗೊಳ್ಳುತ್ತಿದ್ದೀರಾ? / Attending with own interest?</span>
+            <select id="ownInterest" class="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs">
+              <option value="Yes">ಹೌದು / Yes</option>
+              <option value="No">ಇಲ್ಲ / No</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="bg-slate-850 p-2.5 rounded-lg border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+          <label class="font-bold text-amber-400 text-xs">Declaration Language / ಘೋಷಣಾ ಭಾಷೆ:</label>
+          <div class="flex items-center space-x-4 text-xs">
+            <label class="flex items-center space-x-1 cursor-pointer">
+              <input type="radio" name="declLang" value="kannada" checked class="text-amber-500 focus:ring-0">
+              <span>ಕನ್ನಡ / Kannada</span>
+            </label>
+            <label class="flex items-center space-x-1 cursor-pointer">
+              <input type="radio" name="declLang" value="english" class="text-amber-500 focus:ring-0">
+              <span>English</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="pt-2 border-t border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 shrink-0">
+          <div class="flex items-center space-x-2">
+            <button type="button" onclick="previewCurrentFormPrint()" class="flex-1 sm:flex-initial px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded text-xs flex items-center justify-center space-x-1">
+              <i class="fa-solid fa-print"></i>
+              <span>Preview</span>
+            </button>
+            <button type="button" onclick="downloadCurrentFormPDF()" class="flex-1 sm:flex-initial px-3 py-2 bg-red-900/60 hover:bg-red-800 text-red-100 rounded text-xs flex items-center justify-center space-x-1">
+              <i class="fa-solid fa-file-pdf"></i>
+              <span>PDF</span>
+            </button>
+            <button type="button" onclick="shareCurrentForm()" class="flex-1 sm:flex-initial px-3 py-2 bg-emerald-900/60 hover:bg-emerald-800 text-emerald-100 rounded text-xs flex items-center justify-center space-x-1">
+              <i class="fa-solid fa-share-nodes"></i>
+              <span>Share</span>
+            </button>
+          </div>
+          
+          <div class="flex items-center space-x-2">
+            <button type="button" onclick="closeNewEntryModal()" class="flex-1 sm:flex-initial px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs">Close</button>
+            <button type="submit" id="submitFormBtn" class="flex-1 sm:flex-initial px-5 py-2 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold rounded text-xs flex items-center justify-center space-x-1.5 shadow">
+              <i class="fa-solid fa-check"></i>
+              <span>Register & Save</span>
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= SEARCH DIRECTORY MODAL ================= -->
+  <div id="searchModal" class="fixed inset-0 z-40 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 hidden">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-4xl max-h-[96vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden">
+      
+      <div class="bg-slate-800 px-3 sm:px-4 py-2.5 sm:py-3 border-b border-slate-700 flex justify-between items-center shrink-0">
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-magnifying-glass text-amber-400"></i>
+          <h3 class="text-xs sm:text-sm font-bold text-amber-400">Search Records / ದಾಖಲೆಗಳ ಹುಡುಕಾಟ</h3>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button onclick="shareDirectorySummary()" class="px-2.5 py-1 bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 rounded text-xs flex items-center space-x-1">
+            <i class="fa-solid fa-share-nodes"></i>
+            <span>Share List</span>
+          </button>
+          <button onclick="closeSearchModal()" class="text-slate-400 hover:text-white text-xl p-1">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="p-2.5 sm:p-3 bg-slate-850 border-b border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+        <div class="sm:col-span-2">
+          <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Search Name, Place, Phone or Aadhaar..."
+            class="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-slate-100 focus:border-amber-400 focus:outline-none">
+        </div>
+        <div>
+          <input type="date" id="searchDateInput" onchange="handleSearch()" class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-2 text-slate-100 focus:border-amber-400 focus:outline-none">
+        </div>
+      </div>
+
+      <!-- SEARCH DIRECTORY TABLE -->
+      <div class="p-2 sm:p-3 overflow-y-auto flex-1">
+        <div class="overflow-x-auto w-full">
+          <table class="w-full text-left text-xs text-slate-300 border-collapse min-w-[540px]">
+            <thead>
+              <tr class="border-b border-slate-700 text-amber-400 bg-slate-800/60">
+                <th class="p-2.5 text-center w-12">Photo</th>
+                <th class="p-2.5">Date / ದಿನಾಂಕ</th>
+                <th class="p-2.5">Name / ಹೆಸರು</th>
+                <th class="p-2.5">Place / ಸ್ಥಳ</th>
+                <th class="p-2.5 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="searchResultsTableBody"></tbody>
+          </table>
+        </div>
+        <div id="noSearchResults" class="text-center py-8 text-slate-500 text-xs hidden">No matching records found.</div>
+      </div>
+
+      <div class="p-2.5 bg-slate-800 border-t border-slate-700 flex justify-end">
+        <button onclick="closeSearchModal()" class="px-4 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= PRINT PREVIEW & PDF CONTAINER (LARGER FONT & SINGLE PAGE SIZING) ================= -->
+  <div id="printPreviewModal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-1 sm:p-4 hidden">
+    <div class="bg-white text-black w-full max-w-4xl max-h-[98vh] rounded-xl flex flex-col shadow-2xl overflow-hidden">
+      
+      <div class="bg-slate-900 text-white px-3 sm:px-4 py-2 flex justify-between items-center no-print shrink-0">
+        <span class="text-xs font-bold text-amber-400"><i class="fa-solid fa-file-invoice mr-1.5"></i> Document View & Print</span>
+        <div class="flex items-center space-x-1.5">
+          <button onclick="shareActiveRecord()" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded text-xs flex items-center space-x-1">
+            <i class="fa-solid fa-share-nodes"></i>
+            <span>Share</span>
+          </button>
+          <button onclick="triggerCleanSinglePrint()" class="px-2.5 py-1 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold rounded text-xs">
+            <i class="fa-solid fa-print mr-1"></i> Print (1 Copy)
+          </button>
+          <button onclick="downloadActiveLetterheadPDF()" class="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white font-bold rounded text-xs">
+            <i class="fa-solid fa-file-pdf mr-1"></i> PDF
+          </button>
+          <button onclick="closePrintPreview()" class="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs">Close</button>
+        </div>
+      </div>
+
+      <!-- Printable Sheet: Base text size 14px with balanced spacing to fully utilize A4 -->
+      <div class="p-6 sm:p-8 overflow-y-auto flex-1 bg-white text-black text-[14px] leading-normal" id="printableArea" style="background-color: #ffffff;">
+        
+        <!-- Header -->
+        <div class="flex justify-between items-start border-b-2 border-red-700 pb-3 mb-3 bg-white">
+          <div class="w-24 h-24 sm:w-28 sm:h-28 bg-white rounded-full p-1 border-2 border-red-600 shrink-0 logo-insert"></div>
+          <div class="text-center flex-1 px-3">
+            <h1 class="cinzel text-xl sm:text-2xl font-black text-slate-900 tracking-wider">DGM-BETHEL CHURCH TRUST&reg;</h1>
+            <p class="kannada font-bold text-sm sm:text-base text-slate-800 mt-0.5">Form / ನಮೂನೆ</p>
+            <p class="text-[11px] sm:text-[12px] text-slate-600 mt-1 leading-snug">Bethel Road, Yesupura, Innanje Railway Station Road, Innanje Village,</p>
+            <p class="text-[11px] sm:text-[12px] text-slate-600 leading-snug">Shankarpura Post-574115, Udupi Dist. Karnataka, India. Mobile: 0091-9902334941</p>
+            <p class="text-[11px] sm:text-[12px] text-red-700 font-semibold mt-0.5">www.dgmbethelchurch.org</p>
+          </div>
+          <div id="printPhotoContainer" class="w-18 h-24 sm:w-20 sm:h-26 border border-slate-400 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0">
+            <span class="text-[11px] text-slate-400 font-medium">Photo</span>
+          </div>
+        </div>
+
+        <!-- Banner: Reg No & Date (NO SERIAL) -->
+        <div class="flex justify-between items-center bg-slate-100 p-2.5 rounded border border-slate-300 font-bold mb-3 text-[14px]">
+          <span id="printRegNoText" class="font-mono text-red-700 text-base font-bold">Reg No: -</span>
+          <span id="printDateText" class="font-mono text-slate-900 text-base font-bold">Date: -</span>
+        </div>
+
+        <!-- Information Fields -->
+        <div class="space-y-2.5">
+          <div class="grid grid-cols-2 gap-4 border-b border-dotted border-slate-300 pb-1.5">
+            <p><strong>ಹೆಸರು / Name:</strong> <span id="pName" class="font-medium"></span></p>
+            <p><strong>ತಂದೆ/ಗಂಡನ ಹೆಸರು / Relative:</strong> <span id="pRelative" class="font-medium"></span></p>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4 border-b border-dotted border-slate-300 pb-1.5 bg-amber-50/60 p-1.5 rounded">
+            <p><strong>ಆಧಾರ್ ಸಂಖ್ಯೆ / Aadhaar Number:</strong> <span id="pAadhaar" class="font-mono font-semibold"></span></p>
+            <p><strong>ಮೊಬೈಲ್ / Mobile Number:</strong> <span id="pMobile" class="font-mono font-semibold"></span></p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 border-b border-dotted border-slate-300 pb-1.5">
+            <p class="sm:col-span-2"><strong>ಸ್ಥಳ & ವಿಳಾಸ / Place & Full Address:</strong> <span id="pAddress" class="font-medium"></span></p>
+            <p><strong>Pin Code:</strong> <span id="pPincode" class="font-mono font-medium"></span></p>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4 border-b border-dotted border-slate-300 pb-1.5">
+            <p><strong>ಲಿಂಗ / Gender:</strong> <span id="pGender" class="font-medium"></span></p>
+            <p><strong>ಹುಟ್ಟಿದ ದಿನಾಂಕ / DOB (dd/mm/yyyy):</strong> <span id="pDob" class="font-mono font-medium"></span></p>
+          </div>
+
+          <div class="border-b border-dotted border-slate-300 pb-1.5">
+            <p><strong>ಬಂದವರ ಹೆಸರು / Accompanying Visitors:</strong> <span id="pVisitors" class="font-medium"></span></p>
+          </div>
+          <div class="border-b border-dotted border-slate-300 pb-1.5">
+            <p><strong>ಚರ್ಚ್ ಬಗ್ಗೆ ಹೇಗೆ ತಿಳಿಯಿತು? / How did you know:</strong> <span id="pHowKnow" class="font-medium"></span></p>
+          </div>
+          <div class="border-b border-dotted border-slate-300 pb-1.5">
+            <p><strong>ಬರುವ ಉದ್ದೇಶ / Purpose of visit:</strong> <span id="pPurpose" class="font-medium"></span></p>
+          </div>
+
+          <!-- Health & Faith Questions -->
+          <div class="bg-slate-50 p-2.5 rounded border border-slate-200 space-y-1.5 text-[13px] leading-relaxed">
+            <p><strong>1. ಕಾಯಿಲೆ ಇದೆಯಾ? / Any disease:</strong> <span id="pDisease" class="font-medium"></span></p>
+            <p><strong>2. ಚಿಕಿತ್ಸೆ ಪಡೆಯುತ್ತಿದ್ದೀರಾ? / Treatment:</strong> <span id="pTreatment" class="font-medium"></span></p>
+            <p><strong>3. ಸುಧಾರಣೆ ಆಗಿದೆಯಾ? / Improvement:</strong> <span id="pImprovement" class="font-medium"></span></p>
+            <p><strong>4. ದೈವಿಕ ಸ್ವಸ್ಥತೆಯನ್ನು ನಂಬುತ್ತೀರಾ? / Believe in divine healing:</strong> <span id="pHealing" class="font-medium"></span></p>
+            <p><strong>5. ಸ್ವಂತ ಇಷ್ಟದಿಂದ ಪಾಲ್ಗೊಳ್ಳುತ್ತಿದ್ದೀರಾ? / Attending with own interest:</strong> <span id="pInterest" class="font-medium"></span></p>
+          </div>
+
+          <!-- Dynamic Self Declaration Container (Scaled to 12.5px) -->
+          <div id="printDeclarationBox" class="p-3 rounded border border-slate-200 mt-2 text-[12.5px] leading-relaxed"></div>
+
+          <!-- Signatures Section with Balanced Height Spacing -->
+          <div class="flex justify-between items-end pt-12 pb-1 text-[13px] font-bold text-slate-800">
+            <div>ಹೆಸರು / Name</div>
+            <div>ಸಹಿ / Signature</div>
+            <div>ಎಡಗೈ ಹೆಬ್ಬೆಟ್ಟು / L. Thumb</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= JAVASCRIPT LOGIC ================= -->
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxTQkxZV2FN7ufWm9GYYbzuOrHMLGFOpJQIRI66LiHRzGMTO2zs-hs7PN3qYSCKbECWrg/exec";
+
+    let churchEntries = [];
+    let capturedPhotoBase64 = null;
+    let cameraStream = null;
+    let activePreviewRecord = null;
+    let isEditingMode = false;
+    let editingRecordId = null;
+
+    let pendingShareData = { title: "", text: "", url: "" };
+
+    document.addEventListener("DOMContentLoaded", () => {
+      refreshAllLogos();
+      checkAuthLock();
+      initTodaysDate();
+      syncDataFromSheet();
+    });
+
+    function refreshAllLogos() {
+      const template = document.getElementById("dgmLogoSvg").innerHTML;
+      document.querySelectorAll(".logo-insert").forEach(el => {
+        el.innerHTML = template;
+      });
+    }
+
+    // Portal Main Lock Check
+    function checkAuthLock() {
+      if (sessionStorage.getItem("dgm_auth_unlocked") === "true") {
+        document.getElementById("lockScreenModal").classList.add("hidden");
+      } else {
+        document.getElementById("lockScreenModal").classList.remove("hidden");
+      }
+    }
+
+    function handleUnlock(e) {
+      e.preventDefault();
+      const pass = document.getElementById("accessPasscode").value.trim().toLowerCase();
+      if (pass === "jesuscoming") {
+        sessionStorage.setItem("dgm_auth_unlocked", "true");
+        document.getElementById("lockScreenModal").classList.add("hidden");
+        document.getElementById("lockError").classList.add("hidden");
+      } else {
+        document.getElementById("lockError").classList.remove("hidden");
+      }
+    }
+
+    function handleLogout() {
+      sessionStorage.removeItem("dgm_auth_unlocked");
+      sessionStorage.removeItem("dgm_search_unlocked");
+      document.getElementById("accessPasscode").value = "";
+      document.getElementById("lockScreenModal").classList.remove("hidden");
+    }
+
+    function promptSearchAccess() {
+      if (sessionStorage.getItem("dgm_search_unlocked") === "true") {
+        openSearchModal();
+      } else {
+        document.getElementById("searchAccessPasscode").value = "";
+        document.getElementById("searchLockError").classList.add("hidden");
+        document.getElementById("searchAuthModal").classList.remove("hidden");
+        setTimeout(() => document.getElementById("searchAccessPasscode").focus(), 100);
+      }
+    }
+
+    function handleSearchUnlock(e) {
+      e.preventDefault();
+      const pass = document.getElementById("searchAccessPasscode").value.trim().toLowerCase();
+      if (pass === "jesus2coming") {
+        sessionStorage.setItem("dgm_search_unlocked", "true");
+        document.getElementById("searchAuthModal").classList.add("hidden");
+        openSearchModal();
+      } else {
+        document.getElementById("searchLockError").classList.remove("hidden");
+      }
+    }
+
+    function closeSearchAuthModal() {
+      document.getElementById("searchAuthModal").classList.add("hidden");
+    }
+
+    function initTodaysDate() {
+      const today = new Date().toISOString().split('T')[0];
+      const entryDateEl = document.getElementById("entryDate");
+      if (!entryDateEl.value) {
+        entryDateEl.value = today;
+      }
+      updateRegNoPreview();
+    }
+
+    function updateRegNoPreview() {
+      const dt = document.getElementById("entryDate").value;
+      document.getElementById("displayRegId").innerText = buildRegistrationNumber(dt);
+    }
+
+    // STRICT FORMAT: dgmbc/dd/mm/yyyy/ (NO SERIAL)
+    function buildRegistrationNumber(dateStr) {
+      const normalized = normalizeToYMD(dateStr || new Date().toISOString().split('T')[0]);
+      const parts = normalized.split('-');
+      const yyyy = parts[0];
+      const mm = parts[1];
+      const dd = parts[2];
+      return `dgmbc/${dd}/${mm}/${yyyy}/`;
+    }
+
+    function extractRawSheetDate(rec) {
+      if (!rec) return "-";
+      const possibleKeys = [
+        "timestamp", "Timestamp", "regDate", "Date", "date", 
+        "entryDate", "regDateOnly", "regDateFormatted", "created_at"
+      ];
+      for (let k of possibleKeys) {
+        if (rec[k] && String(rec[k]).trim() !== "") {
+          return String(rec[k]).trim();
+        }
+      }
+      return "-";
+    }
+
+    function extractRecordDate(rec) {
+      if (!rec) return "-";
+
+      if (rec.regNo && String(rec.regNo).toLowerCase().startsWith("dgmbc/")) {
+        const parts = String(rec.regNo).split('/');
+        if (parts.length >= 4) {
+          const dd = parts[1].padStart(2, '0');
+          const mm = parts[2].padStart(2, '0');
+          const yyyy = parts[3];
+          return `${dd}/${mm}/${yyyy}`;
+        }
+      }
+
+      const raw = extractRawSheetDate(rec);
+      if (raw === "-") return "-";
+      return parseDateToDDMMYYYY(raw);
+    }
+
+    function parseDateToDDMMYYYY(rawDate) {
+      if (!rawDate || rawDate === "-") return "-";
+      let str = String(rawDate).trim();
+      
+      if (str.includes('T')) {
+        str = str.split('T')[0];
+      }
+
+      if (str.includes('-')) {
+        const parts = str.split('-');
+        if (parts.length === 3) {
+          if (parts[0].length === 4) {
+            return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+          }
+          if (parts[2].length === 4) {
+            return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`;
+          }
+        }
+      } else if (str.includes('/')) {
+        const parts = str.split('/');
+        if (parts.length >= 3) {
+          if (parts[2].length === 4) {
+            return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`;
+          }
+          if (parts[0].length === 4) {
+            return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+          }
+        }
+      }
+      return str;
+    }
+
+    function normalizeToYMD(dStr) {
+      if (!dStr || dStr === "-") return "";
+      let s = String(dStr).trim();
+      if (s.includes('T')) s = s.split('T')[0];
+
+      if (s.includes('-')) {
+        const parts = s.split('-');
+        if (parts.length === 3) {
+          if (parts[0].length === 4) return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+          if (parts[2].length === 4) return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+        }
+      } else if (s.includes('/')) {
+        const parts = s.split('/');
+        if (parts.length === 3) {
+          if (parts[2].length === 4) return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+          if (parts[0].length === 4) return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+        }
+      }
+      return s;
+    }
+
+    function triggerAutoRefill(type, value) {
+      if (!value) return;
+      const cleanVal = value.trim();
+      let match = null;
+
+      if (type === 'aadhaar' && cleanVal.length === 12) {
+        match = [...churchEntries].reverse().find(e => String(e.aadhaar || '').trim() === cleanVal);
+      } else if (type === 'mobile' && cleanVal.length === 10) {
+        match = [...churchEntries].reverse().find(e => String(e.mobile || '').trim() === cleanVal);
+      }
+
+      const feedback = document.getElementById("refillFeedback");
+      if (match) {
+        feedback.innerText = `✓ Details found for "${match.name}". Auto-filled! (Saving creates a new record)`;
+        feedback.classList.remove("hidden");
+        populateFormFields(match, false);
+      } else {
+        feedback.classList.add("hidden");
+      }
+    }
+
+    function populateFormFields(record, keepIds = false) {
+      if (record.name) document.getElementById("nameInput").value = record.name;
+      if (record.relativeName) document.getElementById("relativeNameInput").value = record.relativeName;
+      if (record.address) document.getElementById("addressInput").value = record.address;
+      if (record.pincode) document.getElementById("pincodeInput").value = record.pincode;
+      if (record.gender) document.getElementById("genderInput").value = record.gender;
+      if (record.dob) document.getElementById("dobInput").value = record.dob;
+      
+      if (record.aadhaar && record.aadhaar !== "Not Provided") {
+        document.getElementById("aadhaarInput").value = record.aadhaar;
+      }
+      if (record.mobile) {
+        document.getElementById("mobileInput").value = record.mobile;
+      }
+
+      if (Array.isArray(record.visitors)) {
+        for (let i = 1; i <= 5; i++) {
+          const vInput = document.getElementById(`visitor${i}`);
+          if (vInput) vInput.value = record.visitors[i - 1] || "";
+        }
+      }
+
+      if (record.howKnow) document.getElementById("howKnowInput").value = record.howKnow;
+      if (record.purpose) document.getElementById("purposeInput").value = record.purpose;
+      if (record.hasDisease) document.getElementById("hasDisease").value = record.hasDisease;
+      if (record.diseaseDetails) document.getElementById("diseaseDetails").value = record.diseaseDetails;
+      if (record.takingTreatment) document.getElementById("takingTreatment").value = record.takingTreatment;
+      if (record.treatmentDuration) document.getElementById("treatmentDuration").value = record.treatmentDuration;
+      if (record.treatmentImprovement) document.getElementById("treatmentImprovement").value = record.treatmentImprovement;
+      if (record.believeHealing) document.getElementById("believeHealing").value = record.believeHealing;
+      if (record.ownInterest) document.getElementById("ownInterest").value = record.ownInterest;
+
+      const chosenLang = (record.declarationLang || '').toLowerCase();
+      if (chosenLang === 'english') {
+        const engRadio = document.querySelector('input[name="declLang"][value="english"]');
+        if (engRadio) engRadio.checked = true;
+      } else {
+        const kanRadio = document.querySelector('input[name="declLang"][value="kannada"]');
+        if (kanRadio) kanRadio.checked = true;
+      }
+
+      if (record.photo) {
+        capturedPhotoBase64 = record.photo;
+        document.getElementById("capturedPhotoImg").src = record.photo;
+        document.getElementById("capturedPhotoImg").classList.remove("hidden");
+        document.getElementById("photoPlaceholder").classList.add("hidden");
+        document.getElementById("removePhotoBtn").classList.remove("hidden");
+      }
+    }
+
+    async function syncDataFromSheet() {
+      try {
+        const res = await fetch(SCRIPT_URL);
+        const json = await res.json();
+        if (json.status === "success" && Array.isArray(json.data)) {
+          churchEntries = json.data;
+          localStorage.setItem("dgm_church_entries", JSON.stringify(churchEntries));
+          document.getElementById("syncStatus").innerText = "Google Sheets Live Connected";
+        }
+      } catch (err) {
+        const local = localStorage.getItem("dgm_church_entries");
+        if (local) {
+          churchEntries = JSON.parse(local);
+        }
+        document.getElementById("syncStatus").innerText = "Offline Mode (Cached)";
+      }
+    }
+
+    async function handleFormSubmit(e) {
+      e.preventDefault();
+      const mobileVal = document.getElementById("mobileInput").value.trim();
+      const aadhaarVal = document.getElementById("aadhaarInput").value.trim();
+
+      if (mobileVal.length !== 10) {
+        alert("Mobile number must be exactly 10 digits.");
+        return;
+      }
+      if (aadhaarVal && aadhaarVal.length !== 12) {
+        alert("If entered, Aadhaar number must be exactly 12 numeric digits.");
+        return;
+      }
+
+      const submitBtn = document.getElementById("submitFormBtn");
+      const origText = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Saving...';
+
+      const dt = document.getElementById("entryDate").value;
+      const dobVal = document.getElementById("dobInput").value;
+
+      // Strict Format without serial numbers
+      const fullRegNo = buildRegistrationNumber(dt);
+      
+      const declRadio = document.querySelector('input[name="declLang"]:checked');
+      const declLang = declRadio ? declRadio.value.toLowerCase().trim() : 'kannada';
+
+      const visitors = [];
+      for (let i = 1; i <= 5; i++) {
+        const v = document.getElementById(`visitor${i}`)?.value?.trim();
+        if (v) visitors.push(v);
+      }
+
+      const fullIsoDate = new Date().toISOString();
+
+      const entry = {
+        id: isEditingMode && editingRecordId ? editingRecordId : 'DGM_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+        regNo: fullRegNo,
+        regDate: fullIsoDate,
+        date: fullIsoDate,
+        timestamp: fullIsoDate,
+        regDateOnly: dt,
+        regDateFormatted: parseDateToDDMMYYYY(dt),
+        dob: dobVal,
+        dobFormatted: parseDateToDDMMYYYY(dobVal),
+        aadhaar: aadhaarVal || "Not Provided",
+        mobile: mobileVal,
+        name: document.getElementById("nameInput").value.trim(),
+        relativeName: document.getElementById("relativeNameInput").value.trim(),
+        address: document.getElementById("addressInput").value.trim(),
+        pincode: document.getElementById("pincodeInput").value.trim(),
+        gender: document.getElementById("genderInput").value,
+        visitors: visitors,
+        howKnow: document.getElementById("howKnowInput").value.trim(),
+        purpose: document.getElementById("purposeInput").value.trim(),
+        hasDisease: document.getElementById("hasDisease").value,
+        diseaseDetails: document.getElementById("diseaseDetails").value.trim(),
+        takingTreatment: document.getElementById("takingTreatment").value,
+        treatmentDuration: document.getElementById("treatmentDuration").value.trim(),
+        treatmentImprovement: document.getElementById("treatmentImprovement").value,
+        believeHealing: document.getElementById("believeHealing").value,
+        ownInterest: document.getElementById("ownInterest").value,
+        declarationLang: declLang,
+        photo: capturedPhotoBase64 || ""
+      };
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(entry)
+        });
+        alert(isEditingMode ? "✓ Record updated successfully!" : "✓ New Registration saved successfully!");
+      } catch (err) {
+        console.warn("Saved to local storage:", err);
+        if (isEditingMode) {
+          const idx = churchEntries.findIndex(r => r.id === entry.id);
+          if (idx >= 0) churchEntries[idx] = entry;
+          else churchEntries.push(entry);
+        } else {
+          churchEntries.push(entry);
+        }
+        localStorage.setItem("dgm_church_entries", JSON.stringify(churchEntries));
+        alert("Saved to local storage! (Will sync when server is reachable)");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = origText;
+        isEditingMode = false;
+        editingRecordId = null;
+        await syncDataFromSheet();
+        closeNewEntryModal();
+      }
+    }
+
+    async function startCamera() {
+      if (cameraStream) stopCamera();
+
+      if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        alert("Camera requires a secure HTTPS connection. Please use the upload button.");
+        document.getElementById('mobileCameraFile').click();
+        return;
+      }
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert("Camera API is not supported in this browser. Please use the upload button.");
+        document.getElementById('mobileCameraFile').click();
+        return;
+      }
+
+      const facing = document.getElementById("cameraFacingMode").value;
+      
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: facing }, width: { ideal: 640 }, height: { ideal: 480 } },
+          audio: false
+        });
+      } catch (err1) {
+        try {
+          cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        } catch (err2) {
+          alert("Camera access denied or device unavailable. Please use the upload button.");
+          document.getElementById('mobileCameraFile').click();
+          return;
+        }
+      }
+
+      const video = document.getElementById("cameraVideo");
+      video.srcObject = cameraStream;
+      document.getElementById("cameraContainer").classList.remove("hidden");
+    }
+
+    function toggleCameraFacing() {
+      const select = document.getElementById("cameraFacingMode");
+      select.value = select.value === "user" ? "environment" : "user";
+      startCamera();
+    }
+
+    function stopCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(t => t.stop());
+        cameraStream = null;
+      }
+      document.getElementById("cameraContainer").classList.add("hidden");
+    }
+
+    function takeSnapshot() {
+      const video = document.getElementById("cameraVideo");
+      const canvas = document.getElementById("cameraCanvas");
+      canvas.width = video.videoWidth || 320;
+      canvas.height = video.videoHeight || 240;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      capturedPhotoBase64 = canvas.toDataURL("image/jpeg", 0.75);
+
+      setPhotoPreview(capturedPhotoBase64);
+      stopCamera();
+    }
+
+    function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        capturedPhotoBase64 = e.target.result;
+        setPhotoPreview(capturedPhotoBase64);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function setPhotoPreview(base64Data) {
+      document.getElementById("capturedPhotoImg").src = base64Data;
+      document.getElementById("capturedPhotoImg").classList.remove("hidden");
+      document.getElementById("photoPlaceholder").classList.add("hidden");
+      document.getElementById("removePhotoBtn").classList.remove("hidden");
+    }
+
+    function removePhoto() {
+      capturedPhotoBase64 = null;
+      document.getElementById("capturedPhotoImg").src = "";
+      document.getElementById("capturedPhotoImg").classList.add("hidden");
+      document.getElementById("photoPlaceholder").classList.remove("hidden");
+      document.getElementById("removePhotoBtn").classList.add("hidden");
+      document.getElementById("mobileCameraFile").value = "";
+    }
+
+    // IMAGE ENLARGE HANDLERS
+    function openImageZoom(imgSrc, personName) {
+      if (!imgSrc) return;
+      document.getElementById("enlargedZoomImg").src = imgSrc;
+      document.getElementById("zoomModalTitle").innerText = `Photo - ${personName || 'Record'}`;
+      document.getElementById("imageZoomModal").classList.remove("hidden");
+    }
+
+    function closeImageZoomModal() {
+      document.getElementById("imageZoomModal").classList.add("hidden");
+    }
+
+    function openSearchModal() {
+      syncDataFromSheet();
+      renderSearchResults(churchEntries);
+      document.getElementById("searchModal").classList.remove("hidden");
+    }
+
+    function closeSearchModal() {
+      document.getElementById("searchModal").classList.add("hidden");
+    }
+
+    function handleSearch() {
+      const q = document.getElementById("searchInput").value.toLowerCase().trim();
+      const dt = document.getElementById("searchDateInput").value;
+
+      const filtered = churchEntries.filter(item => {
+        const matchText = !q || 
+          (item.name && item.name.toLowerCase().includes(q)) ||
+          (item.address && item.address.toLowerCase().includes(q)) ||
+          (item.mobile && String(item.mobile).includes(q)) ||
+          (item.aadhaar && String(item.aadhaar).includes(q));
+
+        const itemYMD = normalizeToYMD(extractRawSheetDate(item));
+        const matchDate = !dt || (itemYMD === dt);
+
+        return matchText && matchDate;
+      });
+
+      renderSearchResults(filtered);
+    }
+
+    // SEARCH DIRECTORY: PHOTO ZOOM PREVIEW, DATE, NAME, PLACE, ACTIONS
+    function renderSearchResults(records) {
+      const tbody = document.getElementById("searchResultsTableBody");
+      tbody.innerHTML = "";
+      const empty = document.getElementById("noSearchResults");
+
+      if (!records || records.length === 0) {
+        empty.classList.remove("hidden");
+        return;
+      }
+      empty.classList.add("hidden");
+
+      records.forEach(r => {
+        const tr = document.createElement("tr");
+        tr.className = "border-b border-slate-800 hover:bg-slate-800/40 transition duration-150";
+
+        const sheetFormatDate = extractRawSheetDate(r);
+        const hasPhoto = Boolean(r.photo && r.photo.length > 50);
+
+        tr.innerHTML = `
+          <td class="p-2 text-center">
+            ${hasPhoto 
+              ? `<button type="button" class="btn-zoom-img inline-block w-8 h-8 rounded-full border border-amber-400 overflow-hidden shadow-sm hover:scale-110 transition" title="Click to enlarge photo">
+                   <img src="${r.photo}" class="w-full h-full object-cover">
+                 </button>` 
+              : `<span class="inline-block w-7 h-7 rounded-full bg-slate-800 border border-slate-700 text-slate-500 text-[10px] flex items-center justify-center mx-auto"><i class="fa-solid fa-user"></i></span>`
+            }
+          </td>
+          <td class="p-2.5 text-[11px] font-mono text-slate-200 whitespace-nowrap">${sheetFormatDate}</td>
+          <td class="p-2.5 font-semibold text-slate-100">${r.name || '-'}</td>
+          <td class="p-2.5 text-[11px] text-slate-300 truncate max-w-[200px]">${r.address || '-'}</td>
+          <td class="p-2.5 text-right space-x-1 whitespace-nowrap">
+            <button type="button" class="btn-edit px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded text-[10px]" title="Edit">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+            <button type="button" class="btn-view px-2.5 py-1 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold rounded text-[10px]" title="View & Print">
+              <i class="fa-solid fa-file-invoice"></i>
+            </button>
+            <button type="button" class="btn-share px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded text-[10px]" title="Share">
+              <i class="fa-solid fa-share-nodes"></i>
+            </button>
+          </td>
+        `;
+
+        if (hasPhoto) {
+          tr.querySelector('.btn-zoom-img').addEventListener('click', () => openImageZoom(r.photo, r.name));
+        }
+        tr.querySelector('.btn-edit').addEventListener('click', () => editRecord(r));
+        tr.querySelector('.btn-view').addEventListener('click', () => loadAndPreviewRecord(r));
+        tr.querySelector('.btn-share').addEventListener('click', () => shareSingleRecord(r));
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function editRecord(rec) {
+      closeSearchModal();
+      isEditingMode = true;
+      editingRecordId = rec.id || null;
+      document.getElementById("formModalTitle").innerText = "Edit Entry / ತಿದ್ದುಪಡಿ";
+      document.getElementById("registrationModal").classList.remove("hidden");
+      
+      populateFormFields(rec, true);
+      const rawDate = extractRawSheetDate(rec);
+      if (rawDate && rawDate !== "-") {
+        document.getElementById("entryDate").value = normalizeToYMD(rawDate);
+      }
+      updateRegNoPreview();
+    }
+
+    // PREVIEW, PRINT & PDF RENDER ENGINE (BIGGER FONTS & COMPLETE A4 LAYOUT)
+    function loadAndPreviewRecord(rec) {
+      activePreviewRecord = rec;
+
+      const cleanRegDate = extractRecordDate(rec);
+      const cleanRegNo = rec.regNo || buildRegistrationNumber(cleanRegDate);
+      const cleanDob = rec.dobFormatted || parseDateToDDMMYYYY(rec.dob);
+
+      const regElem = document.getElementById("printRegNoText");
+      const dateElem = document.getElementById("printDateText");
+      if (regElem) regElem.innerText = `Reg No: ${cleanRegNo}`;
+      if (dateElem) dateElem.innerText = `Date: ${cleanRegDate}`;
+
+      document.getElementById("pName").innerText = rec.name || '-';
+      document.getElementById("pRelative").innerText = rec.relativeName || '-';
+      document.getElementById("pAadhaar").innerText = rec.aadhaar || 'Not Provided';
+      document.getElementById("pMobile").innerText = rec.mobile || '-';
+      document.getElementById("pAddress").innerText = rec.address || '-';
+      document.getElementById("pPincode").innerText = rec.pincode || '-';
+      document.getElementById("pGender").innerText = rec.gender === 'F' ? 'Female / ಹೆಣ್ಣು' : 'Male / ಗಂಡು';
+      document.getElementById("pDob").innerText = cleanDob;
+      document.getElementById("pVisitors").innerText = (rec.visitors && rec.visitors.length > 0) ? rec.visitors.join(", ") : 'None';
+      document.getElementById("pHowKnow").innerText = rec.howKnow || '-';
+      document.getElementById("pPurpose").innerText = rec.purpose || '-';
+      document.getElementById("pDisease").innerText = `${rec.hasDisease || 'No'} ${rec.diseaseDetails ? '(' + rec.diseaseDetails + ')' : ''}`;
+      document.getElementById("pTreatment").innerText = `${rec.takingTreatment || 'No'} ${rec.treatmentDuration ? '(' + rec.treatmentDuration + ')' : ''}`;
+      document.getElementById("pImprovement").innerText = rec.treatmentImprovement || 'No';
+      document.getElementById("pHealing").innerText = rec.believeHealing || 'Yes';
+      document.getElementById("pInterest").innerText = rec.ownInterest || 'Yes';
+
+      // English vs Kannada Declaration Switcher
+      const declBox = document.getElementById("printDeclarationBox");
+      const personName = rec.name || '__________________________';
+      const isEnglish = (rec.declarationLang || '').toLowerCase().trim() === 'english';
+
+      if (isEnglish) {
+        declBox.className = "text-[12px] leading-relaxed text-slate-800 text-justify bg-slate-50/50 p-2.5 rounded border border-slate-200 mt-2 font-sans";
+        declBox.innerHTML = `
+          <strong>Subject: Regarding attending DGM Bethel Church for prayer and healing</strong><br>
+          <strong>"Self-Declaration"</strong><br>
+          I, <u>${personName}</u> and my family, I have come to meet Pastor Sunil John Dsouza and receive prayer of my own free will and based on my personal decision. I have not been subjected to any kind of pressure, coercion, inducement or any other form of pressure on me by Pastor Sunil and his family or any member of his church in this matter. My belief in prayer and healing is based on personal and independent decisions. I affirm that all the details written above are true and provided of my own free will. I have voluntarily provided all the information mentioned above.
+        `;
+      } else {
+        declBox.className = "kannada text-[12px] leading-relaxed text-slate-800 text-justify bg-slate-50/50 p-2.5 rounded border border-slate-200 mt-2";
+        declBox.innerHTML = `
+          <strong>ವಿಷಯ: ಪ್ರಾರ್ಥನೆ ಮತ್ತು ಸ್ವಸ್ಥತೆಗಾಗಿ ಡಿಜಿಎಮ್ ಬೇತೇಲ್ ಚರ್ಚ್ಗೆ ಹಾಜರಾಗಲು ಸಿದ್ಧರಿರುವ ಬಗ್ಗೆ</strong><br>
+          <strong>"ಸ್ವಯಂ ಘೋಷಣೆ"</strong><br>
+          ನಾನು <u>${personName}</u> ಮತ್ತು ನನ್ನ ಕುಟುಂಬ ಪಾಸ್ಟರ್ ಸುನಿಲ್ ಜಾನ್ ಡಿಸೋಜಾರವರನ್ನು ಭೇಟಿ ಮಾಡಿ ಪ್ರಾರ್ಥನೆ ಮಾಡಿಸಿಕೊಳ್ಳಲು ಸ್ವಯಂ ಇಚ್ಛೆಯಿಂದ ಮತ್ತು ನನ್ನ ವೈಯಕ್ತಿಕ ನಿರ್ಣಯದ ಮೇರೆಗೆ ಬಂದಿದ್ದೇನೆ. ಈ ವಿಷಯದಲ್ಲಿ ಪಾಸ್ಟರ್ ಸುನಿಲ್, ಅವರ ಕುಟುಂಬ ಅಥವಾ ಅವರ ಚರ್ಚ್ನ ಯಾವುದೇ ಸದಸ್ಯರಿಂದ ನನ್ನ ಮೇಲೆ ಯಾವುದೇ ರೀತಿಯ ಒತ್ತಡ, ಬಲವಂತ, ಪ್ರಲೋಭನೆ ಅಥವಾ ಪ್ರೇರಣೆ ನೀಡಲಾಗಿಲ್ಲ. ಪ್ರಾರ್ಥನೆ ಮತ್ತು ಸ್ವಸ್ಥತೆಯ ಮೇಲೆ ನನ್ನ ನಂಬಿಕೆ ವೈಯಕ್ತಿಕ ಮತ್ತು ಸ್ವತಂತ್ರ ನಿರ್ಣಯದ ಮೇಲೆ ಆಧಾರವಾಗಿದೆ. ನಾನು ಮೇಲೆ ಬರೆದ ಎಲ್ಲಾ ವಿವರಗಳು ನನ್ನ ಸ್ವಂತ ಇಚ್ಛೆಯಿಂದ ಮತ್ತು ಸತ್ಯವಾಗಿವೆ ಎಂದು ದೃಢಪಡಿಸುತ್ತೇನೆ. ಮೇಲೆ ತಿಳಿಸಿದ ಎಲ್ಲಾ ಮಾಹಿತಿಗಳು ನಾನು ಸ್ವಯಂಪ್ರೇರಿತವಾಗಿ ನೀಡಿದ್ದೇನೆ.
+        `;
+      }
+
+      refreshAllLogos();
+
+      const photoBox = document.getElementById("printPhotoContainer");
+      if (rec.photo) {
+        photoBox.innerHTML = `<img src="${rec.photo}" class="w-full h-full object-cover">`;
+      } else {
+        photoBox.innerHTML = `<span class="text-[11px] text-slate-400 font-medium">Photo</span>`;
+      }
+
+      document.getElementById("printPreviewModal").classList.remove("hidden");
+    }
+
+    function closePrintPreview() {
+      document.getElementById("printPreviewModal").classList.add("hidden");
+    }
+
+    function triggerCleanSinglePrint() {
+      window.print();
+    }
+
+    function downloadActiveLetterheadPDF() {
+      refreshAllLogos();
+      const element = document.getElementById("printableArea");
+      const opt = {
+        margin: [6, 6, 6, 6],
+        filename: `DGM_Bethel_${(activePreviewRecord?.name || 'Registration').replace(/\s+/g, '_')}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+      html2pdf().set(opt).from(element).save();
+    }
+
+    function previewCurrentFormPrint() {
+      const dt = document.getElementById("entryDate").value;
+      const dobVal = document.getElementById("dobInput").value;
+      
+      const checkedRadio = document.querySelector('input[name="declLang"]:checked');
+      const declLang = checkedRadio ? checkedRadio.value.toLowerCase().trim() : 'kannada';
+
+      const tempRec = {
+        regNo: buildRegistrationNumber(dt),
+        regDate: new Date().toISOString(),
+        date: new Date().toISOString(),
+        timestamp: new Date().toISOString(),
+        regDateOnly: dt,
+        regDateFormatted: parseDateToDDMMYYYY(dt),
+        dob: dobVal,
+        dobFormatted: parseDateToDDMMYYYY(dobVal),
+        name: document.getElementById("nameInput").value || "Name",
+        relativeName: document.getElementById("relativeNameInput").value || "-",
+        aadhaar: document.getElementById("aadhaarInput").value || "Not Provided",
+        mobile: document.getElementById("mobileInput").value || "-",
+        address: document.getElementById("addressInput").value || "-",
+        pincode: document.getElementById("pincodeInput").value || "-",
+        gender: document.getElementById("genderInput").value,
+        visitors: [
+          document.getElementById("visitor1").value,
+          document.getElementById("visitor2").value,
+          document.getElementById("visitor3").value,
+          document.getElementById("visitor4").value,
+          document.getElementById("visitor5").value
+        ].filter(v => v.trim() !== ""),
+        howKnow: document.getElementById("howKnowInput").value || "-",
+        purpose: document.getElementById("purposeInput").value || "-",
+        hasDisease: document.getElementById("hasDisease").value,
+        diseaseDetails: document.getElementById("diseaseDetails").value,
+        takingTreatment: document.getElementById("takingTreatment").value,
+        treatmentDuration: document.getElementById("treatmentDuration").value,
+        treatmentImprovement: document.getElementById("treatmentImprovement").value,
+        believeHealing: document.getElementById("believeHealing").value,
+        ownInterest: document.getElementById("ownInterest").value,
+        declarationLang: declLang,
+        photo: capturedPhotoBase64
+      };
+      loadAndPreviewRecord(tempRec);
+    }
+
+    function downloadCurrentFormPDF() {
+      previewCurrentFormPrint();
+      setTimeout(() => downloadActiveLetterheadPDF(), 400);
+    }
+
+    // ================= SHARING MODAL LOGIC =================
+    function promptShareModal(title, text) {
+      pendingShareData = {
+        title: title,
+        text: text,
+        url: window.location.href
+      };
+      document.getElementById("copyBtnText").innerText = "Copy Message & Link";
+      document.getElementById("shareActionModal").classList.remove("hidden");
+    }
+
+    function closeShareModal() {
+      document.getElementById("shareActionModal").classList.add("hidden");
+    }
+
+    function executeShare(channel) {
+      const fullText = `${pendingShareData.text}\n\nPortal: ${pendingShareData.url}`;
+      
+      if (channel === 'whatsapp') {
+        const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(fullText)}`;
+        window.open(whatsappUrl, "_blank");
+        closeShareModal();
+      } else if (channel === 'email') {
+        const emailUrl = `mailto:?subject=${encodeURIComponent(pendingShareData.title)}&body=${encodeURIComponent(fullText)}`;
+        window.location.href = emailUrl;
+        closeShareModal();
+      } else if (channel === 'copy') {
+        navigator.clipboard.writeText(fullText).then(() => {
+          document.getElementById("copyBtnText").innerText = "✓ Copied to Clipboard!";
+          setTimeout(() => closeShareModal(), 1200);
+        }).catch(() => {
+          alert("Could not copy directly. Text:\n" + fullText);
+        });
+      }
+    }
+
+    function shareChurchPortal() {
+      const title = "DGM Bethel Church Trust®";
+      const text = "DGM Bethel Church Trust Portal - Official Registration & Prayer Entry\nWebsite: www.dgmbethelchurch.org\nContact: 0091-9902334941";
+      promptShareModal(title, text);
+    }
+
+    function shareCurrentForm() {
+      const name = document.getElementById("nameInput").value || "Visitor";
+      const phone = document.getElementById("mobileInput").value || "-";
+      const place = document.getElementById("addressInput").value || "-";
+      const dt = document.getElementById("entryDate").value;
+      const regId = buildRegistrationNumber(dt);
+
+      const title = `DGM Registration - ${name}`;
+      const text = `DGM-Bethel Church Registration:\nReg No: ${regId}\nName: ${name}\nPlace: ${place}\nMobile: ${phone}\nWebsite: www.dgmbethelchurch.org`;
+      promptShareModal(title, text);
+    }
+
+    function shareActiveRecord() {
+      if (!activePreviewRecord) return;
+      shareSingleRecord(activePreviewRecord);
+    }
+
+    function shareSingleRecord(rec) {
+      const title = `DGM Registration - ${rec.name}`;
+      const cleanRegDate = extractRecordDate(rec);
+      const regId = rec.regNo || buildRegistrationNumber(cleanRegDate);
+      const text = `DGM Bethel Church Registration Details:\nReg No: ${regId}\nName: ${rec.name}\nDate: ${cleanRegDate}\nPlace: ${rec.address || '-'}\nMobile: ${rec.mobile}\nWebsite: www.dgmbethelchurch.org`;
+      promptShareModal(title, text);
+    }
+
+    function shareDirectorySummary() {
+      const count = churchEntries.length;
+      const title = "DGM Bethel Registration Directory";
+      const text = `DGM Bethel Church Portal Summary:\nTotal Registered Records: ${count}\nWebsite: www.dgmbethelchurch.org`;
+      promptShareModal(title, text);
+    }
+
+    function openNewEntryModal() {
+      isEditingMode = false;
+      editingRecordId = null;
+      document.getElementById("formModalTitle").innerText = "New Entry / ಹೊಸ ನೋಂದಣಿ";
+      document.getElementById("registrationForm").reset();
+      initTodaysDate();
+      removePhoto();
+      document.getElementById("refillFeedback").classList.add("hidden");
+      document.getElementById("registrationModal").classList.remove("hidden");
+    }
+
+    function closeNewEntryModal() {
+      stopCamera();
+      document.getElementById("registrationModal").classList.add("hidden");
+      isEditingMode = false;
+      editingRecordId = null;
+    }
+  </script>
+</body>
+</html>
