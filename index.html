@@ -391,15 +391,37 @@
           </div>
         </div>
 
-        <!-- Place & Address, PIN -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-          <div class="sm:col-span-2">
-            <label class="block font-medium text-slate-300 mb-0.5">ಸ್ಥಳ & ಸಂಪೂರ್ಣ ವಿಳಾಸ / Place & Full Address: <span class="text-red-400">*</span></label>
-            <input type="text" id="addressInput" required placeholder="Place / Street, Village, Post, Town" class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-2 text-xs focus:border-amber-400 focus:outline-none">
+        <!-- Full Street Address -->
+        <div>
+          <label class="block font-medium text-slate-300 mb-0.5">ಸಂಪೂರ್ಣ ವಿಳಾಸ / Full Address: <span class="text-red-400">*</span></label>
+          <input type="text" id="addressInput" required placeholder="Street / House Name / Landmark" class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-2 text-xs focus:border-amber-400 focus:outline-none">
+        </div>
+
+        <!-- PIN CODE AUTO-DETECT & CITY, DISTRICT, STATE (WITH MANUAL ENTRY) -->
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
+          <div>
+            <div class="flex justify-between items-center mb-0.5">
+              <label class="block font-medium text-slate-300 text-[11px]">ಪಿನ್ ಕೋಡ್ / Pin Code: <span class="text-red-400">*</span></label>
+              <span id="pinLoader" class="text-[10px] text-amber-400 hidden"><i class="fa-solid fa-spinner fa-spin"></i> Fetching...</span>
+            </div>
+            <input type="text" id="pincodeInput" maxlength="6" placeholder="6-digit PIN" required
+              oninput="handlePincodeLookup(this.value)"
+              class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-2 text-xs text-slate-100 focus:border-amber-400 focus:outline-none font-mono">
           </div>
           <div>
-            <label class="block font-medium text-slate-300 mb-0.5">ಪಿನ್ ಕೋಡ್ / Pin Code:</label>
-            <input type="text" id="pincodeInput" maxlength="6" placeholder="6-digit PIN" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 6)" class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-2 text-xs focus:border-amber-400 focus:outline-none">
+            <label class="block font-medium text-slate-300 mb-0.5 text-[11px]">ಊರು/ನಗರ / City/Town: <span class="text-red-400">*</span></label>
+            <input type="text" id="cityInput" required placeholder="City or Town"
+              class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-2 text-xs text-slate-100 focus:border-amber-400 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-medium text-slate-300 mb-0.5 text-[11px]">ಜಿಲ್ಲೆ / District: <span class="text-red-400">*</span></label>
+            <input type="text" id="districtInput" required placeholder="District"
+              class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-2 text-xs text-slate-100 focus:border-amber-400 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-medium text-slate-300 mb-0.5 text-[11px]">ರಾಜ್ಯ / State: <span class="text-red-400">*</span></label>
+            <input type="text" id="stateInput" required value="Karnataka" placeholder="State"
+              class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-2 text-xs text-slate-100 focus:border-amber-400 focus:outline-none">
           </div>
         </div>
 
@@ -471,7 +493,7 @@
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
             <span class="sm:col-span-2 text-[11px] sm:text-xs">ಚಿಕಿತ್ಸೆಯಿಂದ ಏನಾದರೂ ಸುಧಾರಣೆ ಆಗಿದೆಯಾ? / Improvement in treatment?</span>
-            <select id="treatmentImprovement" class="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs">
+            <select id="treatmentImprovement" class="bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-xs">
               <option value="No">ಇಲ್ಲ / No</option>
               <option value="Yes">ಹೌದು / Yes</option>
             </select>
@@ -479,7 +501,7 @@
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
             <span class="sm:col-span-2 text-[11px] sm:text-xs">ದೈವಿಕ ಸ್ವಸ್ಥತೆಯನ್ನು ನಂಬುತ್ತೀರಾ? / Believe in divine healing?</span>
-            <select id="believeHealing" class="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs">
+            <select id="believeHealing" class="bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-xs">
               <option value="Yes">ಹೌದು / Yes</option>
               <option value="No">ಇಲ್ಲ / No</option>
             </select>
@@ -487,7 +509,7 @@
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
             <span class="sm:col-span-2 text-[11px] sm:text-xs">ಸ್ವಂತ ಇಷ್ಟದಿಂದ ಪಾಲ್ಗೊಳ್ಳುತ್ತಿದ್ದೀರಾ? / Attending with own interest?</span>
-            <select id="ownInterest" class="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs">
+            <select id="ownInterest" class="bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-xs">
               <option value="Yes">ಹೌದು / Yes</option>
               <option value="No">ಇಲ್ಲ / No</option>
             </select>
@@ -559,7 +581,7 @@
 
       <div class="p-2.5 sm:p-3 bg-slate-850 border-b border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
         <div class="sm:col-span-2">
-          <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Search Name, Place, Phone or Aadhaar..."
+          <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Search Name, Visitor, City, District, State, Phone or Aadhaar..."
             class="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-slate-100 focus:border-amber-400 focus:outline-none">
         </div>
         <div>
@@ -576,7 +598,7 @@
                 <th class="p-2.5 text-center w-12">Photo</th>
                 <th class="p-2.5">Date / ದಿನಾಂಕ</th>
                 <th class="p-2.5">Name / ಹೆಸರು</th>
-                <th class="p-2.5">Place / ಸ್ಥಳ</th>
+                <th class="p-2.5">City / District</th>
                 <th class="p-2.5 text-right">Actions</th>
               </tr>
             </thead>
@@ -592,7 +614,7 @@
     </div>
   </div>
 
-  <!-- ================= PRINT PREVIEW & PDF CONTAINER (LARGER FONT & SINGLE PAGE SIZING) ================= -->
+  <!-- ================= PRINT PREVIEW & PDF CONTAINER ================= -->
   <div id="printPreviewModal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-1 sm:p-4 hidden">
     <div class="bg-white text-black w-full max-w-4xl max-h-[98vh] rounded-xl flex flex-col shadow-2xl overflow-hidden">
       
@@ -613,8 +635,8 @@
         </div>
       </div>
 
-      <!-- Printable Sheet: Base text size 14px with balanced spacing to fully utilize A4 -->
-      <div class="p-6 sm:p-8 overflow-y-auto flex-1 bg-white text-black text-[14px] leading-normal" id="printableArea" style="background-color: #ffffff;">
+      <!-- Printable Sheet: Name to DOB enclosed in aligned border box with City, District, State -->
+      <div class="p-6 sm:p-8 overflow-y-auto flex-1 bg-white text-black text-[13.5px] leading-normal" id="printableArea" style="background-color: #ffffff;">
         
         <!-- Header -->
         <div class="flex justify-between items-start border-b-2 border-red-700 pb-3 mb-3 bg-white">
@@ -626,66 +648,98 @@
             <p class="text-[11px] sm:text-[12px] text-slate-600 leading-snug">Shankarpura Post-574115, Udupi Dist. Karnataka, India. Mobile: 0091-9902334941</p>
             <p class="text-[11px] sm:text-[12px] text-red-700 font-semibold mt-0.5">www.dgmbethelchurch.org</p>
           </div>
-          <div id="printPhotoContainer" class="w-18 h-24 sm:w-20 sm:h-26 border border-slate-400 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0">
+          <div id="printPhotoContainer" class="w-20 h-24 sm:w-22 sm:h-28 border border-slate-400 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0">
             <span class="text-[11px] text-slate-400 font-medium">Photo</span>
           </div>
         </div>
 
-        <!-- Banner: Reg No & Date (NO SERIAL) -->
+        <!-- Banner: Reg No & Date -->
         <div class="flex justify-between items-center bg-slate-100 p-2.5 rounded border border-slate-300 font-bold mb-3 text-[14px]">
-          <span id="printRegNoText" class="font-mono text-red-700 text-base font-bold">Reg No: -</span>
-          <span id="printDateText" class="font-mono text-slate-900 text-base font-bold">Date: -</span>
+          <span id="printRegNoText" class="font-mono text-red-700 text-base font-bold text-left">Reg No: -</span>
+          <span id="printDateText" class="font-mono text-slate-900 text-base font-bold text-left">Date: -</span>
         </div>
 
-        <!-- Information Fields -->
-        <div class="space-y-2.5">
-          <div class="grid grid-cols-2 gap-4 border-b border-dotted border-slate-300 pb-1.5">
-            <p><strong>ಹೆಸರು / Name:</strong> <span id="pName" class="font-medium"></span></p>
-            <p><strong>ತಂದೆ/ಗಂಡನ ಹೆಸರು / Relative:</strong> <span id="pRelative" class="font-medium"></span></p>
-          </div>
-          
-          <div class="grid grid-cols-2 gap-4 border-b border-dotted border-slate-300 pb-1.5 bg-amber-50/60 p-1.5 rounded">
-            <p><strong>ಆಧಾರ್ ಸಂಖ್ಯೆ / Aadhaar Number:</strong> <span id="pAadhaar" class="font-mono font-semibold"></span></p>
-            <p><strong>ಮೊಬೈಲ್ / Mobile Number:</strong> <span id="pMobile" class="font-mono font-semibold"></span></p>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 border-b border-dotted border-slate-300 pb-1.5">
-            <p class="sm:col-span-2"><strong>ಸ್ಥಳ & ವಿಳಾಸ / Place & Full Address:</strong> <span id="pAddress" class="font-medium"></span></p>
-            <p><strong>Pin Code:</strong> <span id="pPincode" class="font-mono font-medium"></span></p>
-          </div>
-          
-          <div class="grid grid-cols-2 gap-4 border-b border-dotted border-slate-300 pb-1.5">
-            <p><strong>ಲಿಂಗ / Gender:</strong> <span id="pGender" class="font-medium"></span></p>
-            <p><strong>ಹುಟ್ಟಿದ ದಿನಾಂಕ / DOB (dd/mm/yyyy):</strong> <span id="pDob" class="font-mono font-medium"></span></p>
+        <!-- BOX FORMAT: Personal Details with City, District, State and Left Start Alignment -->
+        <div class="border border-slate-300 rounded overflow-hidden mb-3">
+          <div class="grid grid-cols-2 border-b border-slate-200">
+            <div class="p-2.5 border-r border-slate-200 text-left">
+              <strong>ಹೆಸರು / Full Name:</strong> <span id="pName" class="font-medium ml-1"></span>
+            </div>
+            <div class="p-2.5 text-left">
+              <strong>ತಂದೆ/ಗಂಡನ ಹೆಸರು / Relative:</strong> <span id="pRelative" class="font-medium ml-1"></span>
+            </div>
           </div>
 
-          <div class="border-b border-dotted border-slate-300 pb-1.5">
-            <p><strong>ಬಂದವರ ಹೆಸರು / Accompanying Visitors:</strong> <span id="pVisitors" class="font-medium"></span></p>
+          <div class="grid grid-cols-2 border-b border-slate-200 bg-amber-50/40">
+            <div class="p-2.5 border-r border-slate-200 text-left">
+              <strong>ಆಧಾರ್ ಸಂಖ್ಯೆ / Aadhaar Number:</strong> <span id="pAadhaar" class="font-mono font-semibold ml-1"></span>
+            </div>
+            <div class="p-2.5 text-left">
+              <strong>ಮೊಬೈಲ್ ಸಂಖ್ಯೆ / Mobile Number:</strong> <span id="pMobile" class="font-mono font-semibold ml-1"></span>
+            </div>
           </div>
-          <div class="border-b border-dotted border-slate-300 pb-1.5">
-            <p><strong>ಚರ್ಚ್ ಬಗ್ಗೆ ಹೇಗೆ ತಿಳಿಯಿತು? / How did you know:</strong> <span id="pHowKnow" class="font-medium"></span></p>
+
+          <div class="grid grid-cols-3 border-b border-slate-200">
+            <div class="col-span-2 p-2.5 border-r border-slate-200 text-left">
+              <strong>ಸಂಪೂರ್ಣ ವಿಳಾಸ / Full Address:</strong> <span id="pAddress" class="font-medium ml-1"></span>
+            </div>
+            <div class="p-2.5 text-left">
+              <strong>Pin Code:</strong> <span id="pPincode" class="font-mono font-medium ml-1"></span>
+            </div>
           </div>
-          <div class="border-b border-dotted border-slate-300 pb-1.5">
-            <p><strong>ಬರುವ ಉದ್ದೇಶ / Purpose of visit:</strong> <span id="pPurpose" class="font-medium"></span></p>
+
+          <!-- City, District, State in aligned 3-column row -->
+          <div class="grid grid-cols-3 border-b border-slate-200 bg-slate-50/50">
+            <div class="p-2.5 border-r border-slate-200 text-left">
+              <strong>ಊರು/ನಗರ / City:</strong> <span id="pCity" class="font-medium ml-1"></span>
+            </div>
+            <div class="p-2.5 border-r border-slate-200 text-left">
+              <strong>ಜಿಲ್ಲೆ / District:</strong> <span id="pDistrict" class="font-medium ml-1"></span>
+            </div>
+            <div class="p-2.5 text-left">
+              <strong>ರಾಜ್ಯ / State:</strong> <span id="pState" class="font-medium ml-1"></span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2">
+            <div class="p-2.5 border-r border-slate-200 text-left">
+              <strong>ಲಿಂಗ / Gender:</strong> <span id="pGender" class="font-medium ml-1"></span>
+            </div>
+            <div class="p-2.5 text-left">
+              <strong>ಹುಟ್ಟಿದ ದಿನಾಂಕ / Date of Birth:</strong> <span id="pDob" class="font-mono font-medium ml-1"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Additional Fields with Left Alignment -->
+        <div class="space-y-2">
+          <div class="border-b border-dotted border-slate-300 pb-1.5 text-left">
+            <strong>ಬಂದವರ ಹೆಸರು / Accompanying Visitors:</strong> <span id="pVisitors" class="font-medium ml-1"></span>
+          </div>
+          <div class="border-b border-dotted border-slate-300 pb-1.5 text-left">
+            <strong>ಚರ್ಚ್ ಬಗ್ಗೆ ಹೇಗೆ ತಿಳಿಯಿತು? / How did you know:</strong> <span id="pHowKnow" class="font-medium ml-1"></span>
+          </div>
+          <div class="border-b border-dotted border-slate-300 pb-1.5 text-left">
+            <strong>ಬರುವ ಉದ್ದೇಶ / Purpose of visit:</strong> <span id="pPurpose" class="font-medium ml-1"></span>
           </div>
 
           <!-- Health & Faith Questions -->
-          <div class="bg-slate-50 p-2.5 rounded border border-slate-200 space-y-1.5 text-[13px] leading-relaxed">
-            <p><strong>1. ಕಾಯಿಲೆ ಇದೆಯಾ? / Any disease:</strong> <span id="pDisease" class="font-medium"></span></p>
-            <p><strong>2. ಚಿಕಿತ್ಸೆ ಪಡೆಯುತ್ತಿದ್ದೀರಾ? / Treatment:</strong> <span id="pTreatment" class="font-medium"></span></p>
-            <p><strong>3. ಸುಧಾರಣೆ ಆಗಿದೆಯಾ? / Improvement:</strong> <span id="pImprovement" class="font-medium"></span></p>
-            <p><strong>4. ದೈವಿಕ ಸ್ವಸ್ಥತೆಯನ್ನು ನಂಬುತ್ತೀರಾ? / Believe in divine healing:</strong> <span id="pHealing" class="font-medium"></span></p>
-            <p><strong>5. ಸ್ವಂತ ಇಷ್ಟದಿಂದ ಪಾಲ್ಗೊಳ್ಳುತ್ತಿದ್ದೀರಾ? / Attending with own interest:</strong> <span id="pInterest" class="font-medium"></span></p>
+          <div class="bg-slate-50 p-3 rounded border border-slate-200 space-y-1.5 text-[12.5px] leading-relaxed text-left">
+            <p><strong>1. ಕಾಯಿಲೆ ಇದೆಯಾ? / Any disease:</strong> <span id="pDisease" class="font-medium ml-1"></span></p>
+            <p><strong>2. ಚಿಕಿತ್ಸೆ ಪಡೆಯುತ್ತಿದ್ದೀರಾ? / Treatment:</strong> <span id="pTreatment" class="font-medium ml-1"></span></p>
+            <p><strong>3. ಸುಧಾರಣೆ ಆಗಿದೆಯಾ? / Improvement:</strong> <span id="pImprovement" class="font-medium ml-1"></span></p>
+            <p><strong>4. ದೈವಿಕ ಸ್ವಸ್ಥತೆಯನ್ನು ನಂಬುತ್ತೀರಾ? / Believe in divine healing:</strong> <span id="pHealing" class="font-medium ml-1"></span></p>
+            <p><strong>5. ಸ್ವಂತ ಇಷ್ಟದಿಂದ ಪಾಲ್ಗೊಳ್ಳುತ್ತಿದ್ದೀರಾ? / Attending with own interest:</strong> <span id="pInterest" class="font-medium ml-1"></span></p>
           </div>
 
-          <!-- Dynamic Self Declaration Container (Scaled to 12.5px) -->
-          <div id="printDeclarationBox" class="p-3 rounded border border-slate-200 mt-2 text-[12.5px] leading-relaxed"></div>
+          <!-- Dynamic Self Declaration Container -->
+          <div id="printDeclarationBox" class="p-3 rounded border border-slate-200 mt-2 text-[12px] leading-relaxed text-justify"></div>
 
-          <!-- Signatures Section with Balanced Height Spacing -->
+          <!-- Signatures Section -->
           <div class="flex justify-between items-end pt-12 pb-1 text-[13px] font-bold text-slate-800">
-            <div>ಹೆಸರು / Name</div>
-            <div>ಸಹಿ / Signature</div>
-            <div>ಎಡಗೈ ಹೆಬ್ಬೆಟ್ಟು / L. Thumb</div>
+            <div class="text-left">ಹೆಸರು / Name</div>
+            <div class="text-center">ಸಹಿ / Signature</div>
+            <div class="text-right">ಎಡಗೈ ಹೆಬ್ಬೆಟ್ಟು / L. Thumb</div>
           </div>
         </div>
 
@@ -789,7 +843,6 @@
       document.getElementById("displayRegId").innerText = buildRegistrationNumber(dt);
     }
 
-    // STRICT FORMAT: dgmbc/dd/mm/yyyy/ (NO SERIAL)
     function buildRegistrationNumber(dateStr) {
       const normalized = normalizeToYMD(dateStr || new Date().toISOString().split('T')[0]);
       const parts = normalized.split('-');
@@ -797,6 +850,44 @@
       const mm = parts[1];
       const dd = parts[2];
       return `dgmbc/${dd}/${mm}/${yyyy}/`;
+    }
+
+    // Auto-detect State, District, and City from Indian PIN Code
+    async function handlePincodeLookup(pinVal) {
+      const cleanPin = pinVal.replace(/[^0-9]/g, '').slice(0, 6);
+      document.getElementById("pincodeInput").value = cleanPin;
+
+      if (cleanPin.length === 6) {
+        const loader = document.getElementById("pinLoader");
+        if (loader) loader.classList.remove("hidden");
+
+        try {
+          const response = await fetch(`https://api.postalpincode.in/pincode/${cleanPin}`);
+          const data = await response.json();
+
+          if (data && data[0] && data[0].Status === "Success" && data[0].PostOffice && data[0].PostOffice.length > 0) {
+            const primaryOffice = data[0].PostOffice[0];
+
+            const cityField = document.getElementById("cityInput");
+            const distField = document.getElementById("districtInput");
+            const stateField = document.getElementById("stateInput");
+
+            if (cityField) {
+              cityField.value = primaryOffice.Division || primaryOffice.Taluk || primaryOffice.Name || "";
+            }
+            if (distField) {
+              distField.value = primaryOffice.District || "";
+            }
+            if (stateField) {
+              stateField.value = primaryOffice.State || "";
+            }
+          }
+        } catch (err) {
+          console.warn("PIN Code lookup unavailable. Manual entry remains active.", err);
+        } finally {
+          if (loader) loader.classList.add("hidden");
+        }
+      }
     }
 
     function extractRawSheetDate(rec) {
@@ -884,6 +975,27 @@
       return s;
     }
 
+    function getNextSerialForDate(selectedDate) {
+      const normalizedSel = normalizeToYMD(selectedDate);
+      const dateEntries = churchEntries.filter(e => {
+        const raw = extractRawSheetDate(e);
+        return normalizeToYMD(raw) === normalizedSel;
+      });
+
+      let maxSerial = 0;
+      dateEntries.forEach(e => {
+        let n = parseInt(e.serialNo, 10);
+        if (isNaN(n) && e.regNo) {
+          const parts = e.regNo.split('/');
+          n = parseInt(parts[parts.length - 1], 10);
+        }
+        if (!isNaN(n) && n > maxSerial) maxSerial = n;
+      });
+      let next = maxSerial + 1;
+      if (next > 600) next = 600;
+      return next;
+    }
+
     function triggerAutoRefill(type, value) {
       if (!value) return;
       const cleanVal = value.trim();
@@ -910,6 +1022,11 @@
       if (record.relativeName) document.getElementById("relativeNameInput").value = record.relativeName;
       if (record.address) document.getElementById("addressInput").value = record.address;
       if (record.pincode) document.getElementById("pincodeInput").value = record.pincode;
+      
+      if (record.city) document.getElementById("cityInput").value = record.city;
+      if (record.district) document.getElementById("districtInput").value = record.district;
+      if (record.state) document.getElementById("stateInput").value = record.state;
+      
       if (record.gender) document.getElementById("genderInput").value = record.gender;
       if (record.dob) document.getElementById("dobInput").value = record.dob;
       
@@ -994,8 +1111,6 @@
 
       const dt = document.getElementById("entryDate").value;
       const dobVal = document.getElementById("dobInput").value;
-
-      // Strict Format without serial numbers
       const fullRegNo = buildRegistrationNumber(dt);
       
       const declRadio = document.querySelector('input[name="declLang"]:checked');
@@ -1024,6 +1139,9 @@
         name: document.getElementById("nameInput").value.trim(),
         relativeName: document.getElementById("relativeNameInput").value.trim(),
         address: document.getElementById("addressInput").value.trim(),
+        city: document.getElementById("cityInput").value.trim(),
+        district: document.getElementById("districtInput").value.trim(),
+        state: document.getElementById("stateInput").value.trim(),
         pincode: document.getElementById("pincodeInput").value.trim(),
         gender: document.getElementById("genderInput").value,
         visitors: visitors,
@@ -1160,7 +1278,6 @@
       document.getElementById("mobileCameraFile").value = "";
     }
 
-    // IMAGE ENLARGE HANDLERS
     function openImageZoom(imgSrc, personName) {
       if (!imgSrc) return;
       document.getElementById("enlargedZoomImg").src = imgSrc;
@@ -1187,11 +1304,19 @@
       const dt = document.getElementById("searchDateInput").value;
 
       const filtered = churchEntries.filter(item => {
+        const visitorsStr = Array.isArray(item.visitors) 
+          ? item.visitors.join(" ").toLowerCase() 
+          : [item.visitor1, item.visitor2, item.visitor3, item.visitor4, item.visitor5].filter(Boolean).join(" ").toLowerCase();
+
         const matchText = !q || 
           (item.name && item.name.toLowerCase().includes(q)) ||
           (item.address && item.address.toLowerCase().includes(q)) ||
+          (item.city && item.city.toLowerCase().includes(q)) ||
+          (item.district && item.district.toLowerCase().includes(q)) ||
+          (item.state && item.state.toLowerCase().includes(q)) ||
           (item.mobile && String(item.mobile).includes(q)) ||
-          (item.aadhaar && String(item.aadhaar).includes(q));
+          (item.aadhaar && String(item.aadhaar).includes(q)) ||
+          visitorsStr.includes(q);
 
         const itemYMD = normalizeToYMD(extractRawSheetDate(item));
         const matchDate = !dt || (itemYMD === dt);
@@ -1202,7 +1327,6 @@
       renderSearchResults(filtered);
     }
 
-    // SEARCH DIRECTORY: PHOTO ZOOM PREVIEW, DATE, NAME, PLACE, ACTIONS
     function renderSearchResults(records) {
       const tbody = document.getElementById("searchResultsTableBody");
       tbody.innerHTML = "";
@@ -1221,6 +1345,8 @@
         const sheetFormatDate = extractRawSheetDate(r);
         const hasPhoto = Boolean(r.photo && r.photo.length > 50);
 
+        const cityDist = [r.city, r.district].filter(Boolean).join(", ") || r.address || "-";
+
         tr.innerHTML = `
           <td class="p-2 text-center">
             ${hasPhoto 
@@ -1232,7 +1358,7 @@
           </td>
           <td class="p-2.5 text-[11px] font-mono text-slate-200 whitespace-nowrap">${sheetFormatDate}</td>
           <td class="p-2.5 font-semibold text-slate-100">${r.name || '-'}</td>
-          <td class="p-2.5 text-[11px] text-slate-300 truncate max-w-[200px]">${r.address || '-'}</td>
+          <td class="p-2.5 text-[11px] text-slate-300 truncate max-w-[200px]">${cityDist}</td>
           <td class="p-2.5 text-right space-x-1 whitespace-nowrap">
             <button type="button" class="btn-edit px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded text-[10px]" title="Edit">
               <i class="fa-solid fa-pen-to-square"></i>
@@ -1272,7 +1398,6 @@
       updateRegNoPreview();
     }
 
-    // PREVIEW, PRINT & PDF RENDER ENGINE (BIGGER FONTS & COMPLETE A4 LAYOUT)
     function loadAndPreviewRecord(rec) {
       activePreviewRecord = rec;
 
@@ -1291,6 +1416,11 @@
       document.getElementById("pMobile").innerText = rec.mobile || '-';
       document.getElementById("pAddress").innerText = rec.address || '-';
       document.getElementById("pPincode").innerText = rec.pincode || '-';
+      
+      document.getElementById("pCity").innerText = rec.city || '-';
+      document.getElementById("pDistrict").innerText = rec.district || '-';
+      document.getElementById("pState").innerText = rec.state || 'Karnataka';
+
       document.getElementById("pGender").innerText = rec.gender === 'F' ? 'Female / ಹೆಣ್ಣು' : 'Male / ಗಂಡು';
       document.getElementById("pDob").innerText = cleanDob;
       document.getElementById("pVisitors").innerText = (rec.visitors && rec.visitors.length > 0) ? rec.visitors.join(", ") : 'None';
@@ -1302,7 +1432,6 @@
       document.getElementById("pHealing").innerText = rec.believeHealing || 'Yes';
       document.getElementById("pInterest").innerText = rec.ownInterest || 'Yes';
 
-      // English vs Kannada Declaration Switcher
       const declBox = document.getElementById("printDeclarationBox");
       const personName = rec.name || '__________________________';
       const isEnglish = (rec.declarationLang || '').toLowerCase().trim() === 'english';
@@ -1377,6 +1506,9 @@
         aadhaar: document.getElementById("aadhaarInput").value || "Not Provided",
         mobile: document.getElementById("mobileInput").value || "-",
         address: document.getElementById("addressInput").value || "-",
+        city: document.getElementById("cityInput").value || "-",
+        district: document.getElementById("districtInput").value || "-",
+        state: document.getElementById("stateInput").value || "Karnataka",
         pincode: document.getElementById("pincodeInput").value || "-",
         gender: document.getElementById("genderInput").value,
         visitors: [
@@ -1451,12 +1583,12 @@
     function shareCurrentForm() {
       const name = document.getElementById("nameInput").value || "Visitor";
       const phone = document.getElementById("mobileInput").value || "-";
-      const place = document.getElementById("addressInput").value || "-";
+      const place = document.getElementById("cityInput").value || document.getElementById("addressInput").value || "-";
       const dt = document.getElementById("entryDate").value;
       const regId = buildRegistrationNumber(dt);
 
       const title = `DGM Registration - ${name}`;
-      const text = `DGM-Bethel Church Registration:\nReg No: ${regId}\nName: ${name}\nPlace: ${place}\nMobile: ${phone}\nWebsite: www.dgmbethelchurch.org`;
+      const text = `DGM-Bethel Church Registration:\nReg No: ${regId}\nName: ${name}\nCity: ${place}\nMobile: ${phone}\nWebsite: www.dgmbethelchurch.org`;
       promptShareModal(title, text);
     }
 
@@ -1469,7 +1601,8 @@
       const title = `DGM Registration - ${rec.name}`;
       const cleanRegDate = extractRecordDate(rec);
       const regId = rec.regNo || buildRegistrationNumber(cleanRegDate);
-      const text = `DGM Bethel Church Registration Details:\nReg No: ${regId}\nName: ${rec.name}\nDate: ${cleanRegDate}\nPlace: ${rec.address || '-'}\nMobile: ${rec.mobile}\nWebsite: www.dgmbethelchurch.org`;
+      const cityDist = [rec.city, rec.district, rec.state].filter(Boolean).join(", ") || rec.address || '-';
+      const text = `DGM Bethel Church Registration Details:\nReg No: ${regId}\nName: ${rec.name}\nDate: ${cleanRegDate}\nLocation: ${cityDist}\nMobile: ${rec.mobile}\nWebsite: www.dgmbethelchurch.org`;
       promptShareModal(title, text);
     }
 
