@@ -62,7 +62,7 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen relative overflow-x-hidden select-none antialiased">
 
-  <!-- ================= LOGO TEMPLATE (Google Drive Direct URL) ================= -->
+  <!-- ================= RECTIFIED EMBEDDED LOGO TEMPLATE ================= -->
   <template id="dgmLogoSvg">
     <div class="w-full h-full rounded-full overflow-hidden bg-white flex items-center justify-center p-0.5 shadow-sm border-2 border-red-600">
       <img 
@@ -250,8 +250,15 @@
             <input type="date" id="entryDate" required onchange="updateRegNoPreview()" class="w-full sm:w-auto bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-slate-100 text-xs focus:border-amber-400 focus:outline-none">
           </div>
           
+          <!-- MANUAL REGISTRATION NUMBER (1 to 800) -->
+          <div class="space-y-1 w-full sm:w-48">
+            <label class="block font-medium text-amber-400 text-[11px]">Reg No. (1-800):</label>
+            <input type="number" id="manualSeqInput" min="1" max="800" placeholder="Auto / 1-800" oninput="updateRegNoPreview()"
+              class="w-full bg-slate-800 border border-amber-500/50 rounded px-2.5 py-1.5 text-amber-300 font-mono font-bold text-xs focus:border-amber-400 focus:outline-none">
+          </div>
+
           <div class="text-left sm:text-right">
-            <span class="block text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Registration Number</span>
+            <span class="block text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Registration Preview</span>
             <span id="displayRegId" class="font-mono text-xs font-bold text-amber-400">dgmbc/dd/mm/yyyy/</span>
           </div>
 
@@ -799,7 +806,20 @@
       const yyyy = parts[0];
       const mm = parts[1];
       const dd = parts[2];
-      return `dgmbc/${dd}/${mm}/${yyyy}/`;
+      
+      const manualVal = document.getElementById("manualSeqInput")?.value?.trim();
+      let seqNum = "";
+      if (manualVal !== "" && !isNaN(manualVal)) {
+        let num = parseInt(manualVal, 10);
+        if (num < 1) num = 1;
+        if (num > 800) num = 800;
+        seqNum = num;
+      } else {
+        // Fallback or automatic sequence generation if empty
+        seqNum = (churchEntries.length + 1);
+      }
+
+      return `dgmbc/${dd}/${mm}/${yyyy}/${seqNum}`;
     }
 
     async function handlePincodeLookup(pinVal) {
@@ -963,6 +983,13 @@
       }
       if (record.mobile) {
         document.getElementById("mobileInput").value = record.mobile;
+      }
+
+      if (record.regNo) {
+        const parts = String(record.regNo).split('/');
+        if (parts.length >= 5 && !isNaN(parts[4])) {
+          document.getElementById("manualSeqInput").value = parts[4];
+        }
       }
 
       if (Array.isArray(record.visitors)) {
@@ -1549,6 +1576,7 @@
       editingRecordId = null;
       document.getElementById("formModalTitle").innerText = "New Entry / ಹೊಸ ನೋಂದಣಿ";
       document.getElementById("registrationForm").reset();
+      document.getElementById("manualSeqInput").value = "";
       initTodaysDate();
       removePhoto();
       document.getElementById("refillFeedback").classList.add("hidden");
