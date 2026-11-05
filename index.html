@@ -169,7 +169,7 @@
   </div>
 
   <!-- ================= IMAGE ENLARGE / ZOOM MODAL ================= -->
-  <div id="imageZoomModal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 hidden">
+  <div id="imageZoomModal" class="fixed inset-0 z-[60] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 hidden">
     <div class="relative bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-4 flex flex-col items-center shadow-2xl">
       <button onclick="closeImageZoomModal()" class="absolute top-3 right-3 text-slate-400 hover:text-white text-xl p-1 z-10">
         <i class="fa-solid fa-xmark"></i>
@@ -493,7 +493,7 @@
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
             <span class="sm:col-span-2 text-[11px] sm:text-xs">ಚಿಕಿತ್ಸೆಯಿಂದ ಏನಾದರೂ ಸುಧಾರಣೆ ಆಗಿದೆಯಾ? / Improvement in treatment?</span>
-            <select id="treatmentImprovement" class="bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-xs">
+            <select id="treatmentImprovement" class="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs">
               <option value="No">ಇಲ್ಲ / No</option>
               <option value="Yes">ಹೌದು / Yes</option>
             </select>
@@ -501,7 +501,7 @@
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
             <span class="sm:col-span-2 text-[11px] sm:text-xs">ದೈವಿಕ ಸ್ವಸ್ಥತೆಯನ್ನು ನಂಬುತ್ತೀರಾ? / Believe in divine healing?</span>
-            <select id="believeHealing" class="bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-xs">
+            <select id="believeHealing" class="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs">
               <option value="Yes">ಹೌದು / Yes</option>
               <option value="No">ಇಲ್ಲ / No</option>
             </select>
@@ -509,7 +509,7 @@
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
             <span class="sm:col-span-2 text-[11px] sm:text-xs">ಸ್ವಂತ ಇಷ್ಟದಿಂದ ಪಾಲ್ಗೊಳ್ಳುತ್ತಿದ್ದೀರಾ? / Attending with own interest?</span>
-            <select id="ownInterest" class="bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-xs">
+            <select id="ownInterest" class="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs">
               <option value="Yes">ಹೌದು / Yes</option>
               <option value="No">ಇಲ್ಲ / No</option>
             </select>
@@ -648,7 +648,8 @@
             <p class="text-[11px] sm:text-[12px] text-slate-600 leading-snug">Shankarpura Post-574115, Udupi Dist. Karnataka, India. Mobile: 0091-9902334941</p>
             <p class="text-[11px] sm:text-[12px] text-red-700 font-semibold mt-0.5">www.dgmbethelchurch.org</p>
           </div>
-          <div id="printPhotoContainer" class="w-20 h-24 sm:w-22 sm:h-28 border border-slate-400 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0">
+          <!-- Clickable & Enlargeable photo preview container in Document View -->
+          <div id="printPhotoContainer" class="w-20 h-24 sm:w-22 sm:h-28 border border-slate-400 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0 transition" title="Click to enlarge photo">
             <span class="text-[11px] text-slate-400 font-medium">Photo</span>
           </div>
         </div>
@@ -774,7 +775,6 @@
       });
     }
 
-    // Portal Main Lock Check
     function checkAuthLock() {
       if (sessionStorage.getItem("dgm_auth_unlocked") === "true") {
         document.getElementById("lockScreenModal").classList.add("hidden");
@@ -852,7 +852,6 @@
       return `dgmbc/${dd}/${mm}/${yyyy}/`;
     }
 
-    // Auto-detect State, District, and City from Indian PIN Code
     async function handlePincodeLookup(pinVal) {
       const cleanPin = pinVal.replace(/[^0-9]/g, '').slice(0, 6);
       document.getElementById("pincodeInput").value = cleanPin;
@@ -967,33 +966,12 @@
         }
       } else if (s.includes('/')) {
         const parts = s.split('/');
-        if (parts.length === 3) {
+        if (parts.length >= 3) {
           if (parts[2].length === 4) return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
           if (parts[0].length === 4) return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
         }
       }
       return s;
-    }
-
-    function getNextSerialForDate(selectedDate) {
-      const normalizedSel = normalizeToYMD(selectedDate);
-      const dateEntries = churchEntries.filter(e => {
-        const raw = extractRawSheetDate(e);
-        return normalizeToYMD(raw) === normalizedSel;
-      });
-
-      let maxSerial = 0;
-      dateEntries.forEach(e => {
-        let n = parseInt(e.serialNo, 10);
-        if (isNaN(n) && e.regNo) {
-          const parts = e.regNo.split('/');
-          n = parseInt(parts[parts.length - 1], 10);
-        }
-        if (!isNaN(n) && n > maxSerial) maxSerial = n;
-      });
-      let next = maxSerial + 1;
-      if (next > 600) next = 600;
-      return next;
     }
 
     function triggerAutoRefill(type, value) {
@@ -1278,6 +1256,7 @@
       document.getElementById("mobileCameraFile").value = "";
     }
 
+    // Photo Enlarge Handler
     function openImageZoom(imgSrc, personName) {
       if (!imgSrc) return;
       document.getElementById("enlargedZoomImg").src = imgSrc;
@@ -1344,7 +1323,6 @@
 
         const sheetFormatDate = extractRawSheetDate(r);
         const hasPhoto = Boolean(r.photo && r.photo.length > 50);
-
         const cityDist = [r.city, r.district].filter(Boolean).join(", ") || r.address || "-";
 
         tr.innerHTML = `
@@ -1398,6 +1376,7 @@
       updateRegNoPreview();
     }
 
+    // PREVIEW, PRINT & PDF RENDER ENGINE (WITH CLICK-TO-ENLARGE PHOTO)
     function loadAndPreviewRecord(rec) {
       activePreviewRecord = rec;
 
@@ -1456,7 +1435,7 @@
 
       const photoBox = document.getElementById("printPhotoContainer");
       if (rec.photo) {
-        photoBox.innerHTML = `<img src="${rec.photo}" class="w-full h-full object-cover">`;
+        photoBox.innerHTML = `<img src="${rec.photo}" class="w-full h-full object-cover cursor-pointer hover:opacity-90" onclick="openImageZoom('${rec.photo}', '${(rec.name || 'Visitor').replace(/'/g, "\\'")}')">`;
       } else {
         photoBox.innerHTML = `<span class="text-[11px] text-slate-400 font-medium">Photo</span>`;
       }
