@@ -62,72 +62,22 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen relative overflow-x-hidden select-none antialiased">
 
-  <!-- SVG EMBLEM TEMPLATE -->
+  <!-- ================= LOGO TEMPLATE (Google Drive Direct URL) ================= -->
   <template id="dgmLogoSvg">
-    <svg viewBox="0 0 240 240" class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="120" cy="120" r="118" fill="#ffffff" stroke="#c5161d" stroke-width="4"/>
-      <circle cx="120" cy="120" r="111" fill="#0d0d0d"/>
-      
-      <path id="topTextArc" d="M 30 120 A 90 90 0 0 1 210 120" fill="none"/>
-      <text font-family="'Cinzel', serif" font-size="14.5" font-weight="900" fill="#ffffff" letter-spacing="3.5">
-        <textPath href="#topTextArc" startOffset="50%" text-anchor="middle">DIVINE GENERATION MINISTRIES</textPath>
-      </text>
-
-      <circle cx="120" cy="118" r="66" fill="#fdf0e2" stroke="#bf2619" stroke-width="2"/>
-      
-      <g fill="none" stroke="#d42617" stroke-width="4.5" stroke-linecap="round" opacity="0.95">
-        <path d="M 120 54 C 150 66, 182 92, 172 126"/>
-        <path d="M 186 118 C 176 150, 146 176, 112 176"/>
-        <path d="M 120 182 C 84 176, 60 146, 66 114"/>
-        <path d="M 54 118 C 60 86, 90 60, 120 54"/>
-      </g>
-
-      <rect x="105" y="86" width="30" height="42" fill="#ffffff" stroke="#111111" stroke-width="2.5"/>
-      <polygon points="120,68 105,86 135,86" fill="#ffffff" stroke="#111111" stroke-width="2.5"/>
-      <line x1="120" y1="60" x2="120" y2="68" stroke="#111111" stroke-width="2.5"/>
-      <line x1="116" y1="63" x2="124" y2="63" stroke="#111111" stroke-width="2.5"/>
-
-      <rect x="88" y="97" width="17" height="31" fill="#ffffff" stroke="#111111" stroke-width="2"/>
-      <polygon points="96.5,86 88,97 105,97" fill="#ffffff" stroke="#111111" stroke-width="2"/>
-      <rect x="135" y="97" width="17" height="31" fill="#ffffff" stroke="#111111" stroke-width="2"/>
-      <polygon points="143.5,86 135,97 152,97" fill="#ffffff" stroke="#111111" stroke-width="2"/>
-
-      <path d="M 112 105 A 8 8 0 0 1 128 105 V 128 H 112 Z" fill="none" stroke="#111111" stroke-width="2"/>
-      <path d="M 92 110 A 4.5 4.5 0 0 1 101 110 V 128 H 92 Z" fill="none" stroke="#111111" stroke-width="1.8"/>
-      <path d="M 139 110 A 4.5 4.5 0 0 1 148 110 V 128 H 139 Z" fill="none" stroke="#111111" stroke-width="1.8"/>
-
-      <g fill="#111111">
-        <circle cx="103" cy="135" r="3.2"/>
-        <circle cx="120" cy="133" r="3.6"/>
-        <circle cx="137" cy="135" r="3.2"/>
-        <circle cx="111" cy="142" r="2.8"/>
-        <circle cx="129" cy="142" r="2.8"/>
-      </g>
-      <g fill="none" stroke="#111111" stroke-width="1.6">
-        <path d="M 98 147 Q 103 140 108 147 Z"/>
-        <path d="M 114 146 Q 120 138 126 146 Z"/>
-        <path d="M 132 147 Q 137 140 142 147 Z"/>
-      </g>
-
-      <circle cx="50" cy="151" r="5" fill="#c5161d"/>
-      <circle cx="190" cy="151" r="5" fill="#c5161d"/>
-
-      <path id="bottomTextArc" d="M 45 130 A 84 84 0 0 0 195 130" fill="none"/>
-      <text font-family="'Cinzel', serif" font-size="20" font-weight="900" fill="#ffffff" letter-spacing="5">
-        <textPath href="#bottomTextArc" startOffset="50%" text-anchor="middle">BETHEL</textPath>
-      </text>
-
-      <path id="sloganArc" d="M 15 135 A 108 108 0 0 0 225 135" fill="none"/>
-      <text font-family="'Poppins', sans-serif" font-size="9" font-weight="600" fill="#999999" letter-spacing="1">
-        <textPath href="#sloganArc" startOffset="50%" text-anchor="middle">..building Godly Generation!</textPath>
-      </text>
-    </svg>
+    <div class="w-full h-full rounded-full overflow-hidden bg-white flex items-center justify-center p-0.5 shadow-sm border-2 border-red-600">
+      <img 
+        src="https://lh3.googleusercontent.com/d/1YAShVtP-OR8r4NJxNgGlgba1oy3JKUKf" 
+        alt="DGM Bethel Church Logo" 
+        class="w-full h-full object-contain rounded-full"
+        crossorigin="anonymous"
+      />
+    </div>
   </template>
 
   <!-- ================= PORTAL LOCK SCREEN MODAL ================= -->
   <div id="lockScreenModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-md p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl">
-      <div class="w-20 h-20 mx-auto mb-4 bg-white rounded-full p-1 shadow border-2 border-red-600 logo-insert"></div>
+      <div class="w-20 h-20 mx-auto mb-4 bg-white rounded-full p-0.5 shadow border-2 border-red-600 logo-insert"></div>
       <h2 class="cinzel text-base sm:text-lg font-bold text-amber-400 tracking-wider mb-5">DGM - BETHEL CHURCH</h2>
       <form onsubmit="handleUnlock(event)" class="space-y-4">
         <div>
@@ -168,7 +118,7 @@
     </div>
   </div>
 
-  <!-- ================= IMAGE ENLARGE / ZOOM MODAL ================= -->
+  <!-- ================= IMAGE ENLARGE MODAL ================= -->
   <div id="imageZoomModal" class="fixed inset-0 z-[60] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 hidden">
     <div class="relative bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-4 flex flex-col items-center shadow-2xl">
       <button onclick="closeImageZoomModal()" class="absolute top-3 right-3 text-slate-400 hover:text-white text-xl p-1 z-10">
@@ -247,7 +197,7 @@
     </header>
 
     <section class="flex flex-col items-center text-center my-auto py-6 max-w-4xl w-full px-2">
-      <div class="w-28 h-28 sm:w-36 sm:h-36 bg-white rounded-full p-1.5 shadow-2xl border-4 border-red-600 mb-4 logo-insert"></div>
+      <div class="w-28 h-28 sm:w-36 sm:h-36 bg-white rounded-full p-1 shadow-2xl border-4 border-red-600 mb-4 logo-insert"></div>
       <h1 class="cinzel text-2xl sm:text-4xl font-black text-amber-400 tracking-wider mb-1">DGM - BETHEL CHURCH TRUST<sup>&reg;</sup></h1>
       <p class="kannada text-xs sm:text-base font-semibold text-slate-300 mb-3 tracking-wide">ಡಿಜಿಎಮ್ ಬೇತೇಲ್ ಚರ್ಚ್ ಟ್ರಸ್ಟ್ &bull; Form / ನಮೂನೆ</p>
 
@@ -294,7 +244,6 @@
 
       <form id="registrationForm" onsubmit="handleFormSubmit(event)" class="p-3 sm:p-5 overflow-y-auto space-y-3 text-xs text-slate-200">
         
-        <!-- Registration Date & Format Preview -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-850 p-2.5 rounded-lg border border-slate-800">
           <div class="space-y-1 w-full sm:w-auto">
             <label class="block font-medium text-slate-300 text-[11px]">Date / ದಿನಾಂಕ:</label>
@@ -397,7 +346,7 @@
           <input type="text" id="addressInput" required placeholder="Street / House Name / Landmark" class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-2 text-xs focus:border-amber-400 focus:outline-none">
         </div>
 
-        <!-- PIN CODE AUTO-DETECT & CITY, DISTRICT, STATE (WITH MANUAL ENTRY) -->
+        <!-- PIN CODE AUTO-DETECT & CITY, DISTRICT, STATE -->
         <div class="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
           <div>
             <div class="flex justify-between items-center mb-0.5">
@@ -635,7 +584,7 @@
         </div>
       </div>
 
-      <!-- Printable Sheet: Name to DOB enclosed in aligned border box with City, District, State -->
+      <!-- Printable Sheet: Name to DOB in aligned border box -->
       <div class="p-6 sm:p-8 overflow-y-auto flex-1 bg-white text-black text-[13.5px] leading-normal" id="printableArea" style="background-color: #ffffff;">
         
         <!-- Header -->
@@ -648,8 +597,8 @@
             <p class="text-[11px] sm:text-[12px] text-slate-600 leading-snug">Shankarpura Post-574115, Udupi Dist. Karnataka, India. Mobile: 0091-9902334941</p>
             <p class="text-[11px] sm:text-[12px] text-red-700 font-semibold mt-0.5">www.dgmbethelchurch.org</p>
           </div>
-          <!-- Clickable & Enlargeable photo preview container in Document View -->
-          <div id="printPhotoContainer" class="w-20 h-24 sm:w-22 sm:h-28 border border-slate-400 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0 transition" title="Click to enlarge photo">
+          <!-- Clickable Photo Box in View / Print -->
+          <div id="printPhotoContainer" class="w-20 h-24 sm:w-22 sm:h-28 border border-slate-400 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0 transition" title="Click to view/enlarge photo">
             <span class="text-[11px] text-slate-400 font-medium">Photo</span>
           </div>
         </div>
@@ -775,6 +724,7 @@
       });
     }
 
+    // Portal Main Lock Check
     function checkAuthLock() {
       if (sessionStorage.getItem("dgm_auth_unlocked") === "true") {
         document.getElementById("lockScreenModal").classList.add("hidden");
@@ -968,7 +918,7 @@
         const parts = s.split('/');
         if (parts.length >= 3) {
           if (parts[2].length === 4) return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-          if (parts[0].length === 4) return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+          if (parts[0].length === 4) return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2]}`;
         }
       }
       return s;
@@ -1376,7 +1326,7 @@
       updateRegNoPreview();
     }
 
-    // PREVIEW, PRINT & PDF RENDER ENGINE (WITH CLICK-TO-ENLARGE PHOTO)
+    // PREVIEW, PRINT & PDF RENDER ENGINE
     function loadAndPreviewRecord(rec) {
       activePreviewRecord = rec;
 
@@ -1411,6 +1361,7 @@
       document.getElementById("pHealing").innerText = rec.believeHealing || 'Yes';
       document.getElementById("pInterest").innerText = rec.ownInterest || 'Yes';
 
+      // English vs Kannada Declaration Switcher
       const declBox = document.getElementById("printDeclarationBox");
       const personName = rec.name || '__________________________';
       const isEnglish = (rec.declarationLang || '').toLowerCase().trim() === 'english';
@@ -1433,9 +1384,10 @@
 
       refreshAllLogos();
 
+      // Clickable Photo Box in View and Print Preview
       const photoBox = document.getElementById("printPhotoContainer");
-      if (rec.photo) {
-        photoBox.innerHTML = `<img src="${rec.photo}" class="w-full h-full object-cover cursor-pointer hover:opacity-90" onclick="openImageZoom('${rec.photo}', '${(rec.name || 'Visitor').replace(/'/g, "\\'")}')">`;
+      if (rec.photo && rec.photo.length > 50) {
+        photoBox.innerHTML = `<img src="${rec.photo}" class="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onclick="openImageZoom('${rec.photo}', '${(rec.name || 'Visitor').replace(/'/g, "\\'")}')">`;
       } else {
         photoBox.innerHTML = `<span class="text-[11px] text-slate-400 font-medium">Photo</span>`;
       }
