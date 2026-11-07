@@ -241,7 +241,7 @@
 
       <div class="mt-5 text-[11px] text-slate-400 flex items-center justify-center space-x-2">
         <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping" id="syncStatusDot"></span>
-        <span id="syncStatus">Google Sheets Live Connected</span>
+        <span id="syncStatus">Connecting to Google Sheets...</span>
       </div>
     </section>
 
@@ -767,13 +767,29 @@
     function getSheetField(rec, type) {
       if (!rec) return "";
       const keyMap = {
+        name: ["name", "Name", "NAME", "Full Name", "full name", "visitor_name", "ಹೆಸರು"],
+        relativeName: ["relativeName", "RelativeName", "Relative", "relative", "Father/Husband Name", "father_name"],
+        address: ["address", "Address", "ADDRESS", "Full Address", "full address"],
         regNo: ["regNo", "Reg No.", "Reg No", "RegNo", "reg_no", "Registration Number", "Registration No", "Reg. No."],
         city: ["city", "City", "CITY", "place", "Place", "town", "Town", "village", "Village", "taluk", "Taluk", "ಊರು", "ನಗರ"],
         district: ["district", "District", "DISTRICT", "dist", "Dist", "ಜಿಲ್ಲೆ"],
         state: ["state", "State", "STATE", "ರಾಜ್ಯ"],
         pincode: ["pincode", "Pincode", "PinCode", "PINCODE", "Pin Code", "pin", "Pin", "PIN", "zip"],
-        mobile: ["mobile", "Mobile", "MOBILE", "Mobile No", "Mobile Number", "phone", "Phone"],
-        aadhaar: ["aadhaar", "Aadhaar", "aadhar", "Aadhar", "Aadhar No", "Aadhaar No"]
+        mobile: ["mobile", "Mobile", "MOBILE", "Mobile No", "Mobile Number", "phone", "Phone", "ಮೊಬೈಲ್ ಸಂಖ್ಯೆ"],
+        aadhaar: ["aadhaar", "Aadhaar", "aadhar", "Aadhar", "Aadhar No", "Aadhaar No", "ಆಧಾರ್ ಸಂಖ್ಯೆ"],
+        gender: ["gender", "Gender", "GENDER", "ಲಿಂಗ"],
+        dob: ["dob", "DOB", "Dob", "Date of Birth", "date of birth"],
+        howKnow: ["howKnow", "HowKnow", "how_know", "How did you know"],
+        purpose: ["purpose", "Purpose", "purpose_of_visit", "Purpose of visit"],
+        hasDisease: ["hasDisease", "HasDisease", "disease", "Any disease"],
+        diseaseDetails: ["diseaseDetails", "DiseaseDetails", "disease_details"],
+        takingTreatment: ["takingTreatment", "TakingTreatment", "treatment"],
+        treatmentDuration: ["treatmentDuration", "TreatmentDuration"],
+        treatmentImprovement: ["treatmentImprovement", "TreatmentImprovement", "improvement"],
+        believeHealing: ["believeHealing", "BelieveHealing", "healing"],
+        ownInterest: ["ownInterest", "OwnInterest", "interest"],
+        declarationLang: ["declarationLang", "DeclarationLang", "lang"],
+        photo: ["photo", "Photo", "PHOTO", "image"]
       };
       const candidates = keyMap[type] || [type];
       for (const k of candidates) {
@@ -793,7 +809,6 @@
       return "";
     }
 
-    // Extract full Registration Number from record (preserving user's custom 1-800 number)
     function getFullRegNoFromRecord(rec) {
       if (!rec) return "-";
       const storedReg = getSheetField(rec, 'regNo');
@@ -812,7 +827,6 @@
       return buildRegistrationNumber(extractRecordDate(rec), seqField || "");
     }
 
-    // Network & Auto-Sync Listeners
     function setupNetworkListeners() {
       window.addEventListener('online', async () => {
         document.getElementById("syncStatus").innerText = "Back online! Syncing offline entries...";
@@ -840,7 +854,7 @@
             body: JSON.stringify(entry)
           });
           const json = await res.json();
-          if (json.status !== "success") {
+          if (json.status !== "success" && json.result !== "success") {
             remaining.push(entry);
           }
         } catch (err) {
@@ -848,15 +862,8 @@
         }
       }
       localStorage.setItem("dgm_offline_queue", JSON.stringify(remaining));
-      if (remaining.length === 0) {
-        document.getElementById("syncStatus").innerText = "Google Sheets Live Connected (All Synced)";
-        document.getElementById("syncStatusDot").className = "inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping";
-      } else {
-        document.getElementById("syncStatus").innerText = `Sync partial: ${remaining.length} pending`;
-      }
     }
 
-    // Portal Main Lock Check
     function checkAuthLock() {
       if (sessionStorage.getItem("dgm_auth_unlocked") === "true") {
         document.getElementById("lockScreenModal").classList.add("hidden");
@@ -962,23 +969,16 @@
 
           if (data && data[0] && data[0].Status === "Success" && data[0].PostOffice && data[0].PostOffice.length > 0) {
             const primaryOffice = data[0].PostOffice[0];
-
             const cityField = document.getElementById("cityInput");
             const distField = document.getElementById("districtInput");
             const stateField = document.getElementById("stateInput");
 
-            if (cityField) {
-              cityField.value = primaryOffice.Block || primaryOffice.Taluk || primaryOffice.Name || primaryOffice.Division || "";
-            }
-            if (distField) {
-              distField.value = primaryOffice.District || "";
-            }
-            if (stateField) {
-              stateField.value = primaryOffice.State || "Karnataka";
-            }
+            if (cityField) cityField.value = primaryOffice.Block || primaryOffice.Taluk || primaryOffice.Name || primaryOffice.Division || "";
+            if (distField) distField.value = primaryOffice.District || "";
+            if (stateField) stateField.value = primaryOffice.State || "Karnataka";
           }
         } catch (err) {
-          console.warn("PIN Code lookup unavailable. Manual entry remains active.", err);
+          console.warn("PIN Code lookup unavailable.", err);
         } finally {
           if (loader) loader.classList.add("hidden");
         }
@@ -989,10 +989,10 @@
       if (!rec) return "-";
       const possibleKeys = [
         "regDateOnly", "regDateFormatted", "entryDate", "Date", "date", 
-        "regDate", "timestamp", "Timestamp", "created_at"
+        "regDate", "timestamp", "Timestamp", "created_at", "ದಿನಾಂಕ"
       ];
       for (let k of possibleKeys) {
-        if (rec[k] && String(rec[k]).trim() !== "") {
+        if (rec[k] !== undefined && rec[k] !== null && String(rec[k]).trim() !== "") {
           return String(rec[k]).trim();
         }
       }
@@ -1021,30 +1021,19 @@
     function parseDateToDDMMYYYY(rawDate) {
       if (!rawDate || rawDate === "-") return "-";
       let str = String(rawDate).trim();
-      
-      if (str.includes('T')) {
-        str = str.split('T')[0];
-      }
+      if (str.includes('T')) str = str.split('T')[0];
 
       if (str.includes('-')) {
         const parts = str.split('-');
         if (parts.length === 3) {
-          if (parts[0].length === 4) {
-            return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
-          }
-          if (parts[2].length === 4) {
-            return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`;
-          }
+          if (parts[0].length === 4) return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+          if (parts[2].length === 4) return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`;
         }
       } else if (str.includes('/')) {
         const parts = str.split('/');
         if (parts.length >= 3) {
-          if (parts[2].length === 4) {
-            return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`;
-          }
-          if (parts[0].length === 4) {
-            return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
-          }
+          if (parts[2].length === 4) return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`;
+          if (parts[0].length === 4) return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
         }
       }
       return str;
@@ -1071,8 +1060,6 @@
       return s;
     }
 
-    // Auto-Refill when entering Mobile or Aadhaar:
-    // Strictly keeps isEditingMode = false so saving creates a brand new record with current Entry Date & new Reg No!
     function triggerAutoRefill(type, value) {
       if (!value || isEditingMode) return;
       const cleanVal = value.trim();
@@ -1090,7 +1077,7 @@
         isEditingMode = false;
         editingRecordId = null;
 
-        feedback.innerText = `✓ Found ${matches.length} previous visit(s) for "${latestMatch.name}". Details auto-filled! Saving will create a NEW record with today's Entry Date & your selected Reg No.`;
+        feedback.innerText = `✓ Found ${matches.length} previous visit(s) for "${getSheetField(latestMatch, 'name')}". Details auto-filled! Saving will create a NEW record.`;
         feedback.classList.remove("hidden");
         populateFormFields(latestMatch, false);
       } else {
@@ -1099,15 +1086,17 @@
     }
 
     function populateFormFields(record, isEdit = false) {
-      if (record.name) document.getElementById("nameInput").value = record.name;
-      if (record.relativeName) document.getElementById("relativeNameInput").value = record.relativeName;
-      if (record.address) document.getElementById("addressInput").value = record.address;
-      
+      const nameVal = getSheetField(record, 'name');
+      const relVal = getSheetField(record, 'relativeName');
+      const addrVal = getSheetField(record, 'address');
       const pinVal = getSheetField(record, 'pincode');
       const cityVal = getSheetField(record, 'city');
       const distVal = getSheetField(record, 'district');
       const stateVal = getSheetField(record, 'state');
 
+      if (nameVal) document.getElementById("nameInput").value = nameVal;
+      if (relVal) document.getElementById("relativeNameInput").value = relVal;
+      if (addrVal) document.getElementById("addressInput").value = addrVal;
       if (pinVal) document.getElementById("pincodeInput").value = pinVal;
       if (cityVal) document.getElementById("cityInput").value = cityVal;
       if (distVal) document.getElementById("districtInput").value = distVal;
@@ -1117,8 +1106,10 @@
         handlePincodeLookup(pinVal);
       }
 
-      if (record.gender) document.getElementById("genderInput").value = record.gender;
-      if (record.dob) document.getElementById("dobInput").value = record.dob;
+      const genVal = getSheetField(record, 'gender');
+      if (genVal) document.getElementById("genderInput").value = genVal;
+      const dobVal = getSheetField(record, 'dob');
+      if (dobVal) document.getElementById("dobInput").value = normalizeToYMD(dobVal);
       
       const aadhaarVal = getSheetField(record, 'aadhaar');
       if (aadhaarVal && aadhaarVal !== "Not Provided") {
@@ -1129,7 +1120,6 @@
         document.getElementById("mobileInput").value = mobileVal;
       }
 
-      // Only overwrite the Reg No. input if we are explicitly editing an existing record.
       if (isEdit) {
         const fullReg = getFullRegNoFromRecord(record);
         const parts = String(fullReg).split('/');
@@ -1140,24 +1130,35 @@
         }
       }
 
-      if (Array.isArray(record.visitors)) {
-        for (let i = 1; i <= 5; i++) {
-          const vInput = document.getElementById(`visitor${i}`);
-          if (vInput) vInput.value = record.visitors[i - 1] || "";
-        }
+      const visitorsArr = Array.isArray(record.visitors)
+        ? record.visitors
+        : (typeof record.visitors === "string" && record.visitors ? record.visitors.split(",").map(s => s.trim()) : []);
+
+      for (let i = 1; i <= 5; i++) {
+        const vInput = document.getElementById(`visitor${i}`);
+        if (vInput) vInput.value = visitorsArr[i - 1] || record[`visitor${i}`] || "";
       }
 
-      if (record.howKnow) document.getElementById("howKnowInput").value = record.howKnow;
-      if (record.purpose) document.getElementById("purposeInput").value = record.purpose;
-      if (record.hasDisease) document.getElementById("hasDisease").value = record.hasDisease;
-      if (record.diseaseDetails) document.getElementById("diseaseDetails").value = record.diseaseDetails;
-      if (record.takingTreatment) document.getElementById("takingTreatment").value = record.takingTreatment;
-      if (record.treatmentDuration) document.getElementById("treatmentDuration").value = record.treatmentDuration;
-      if (record.treatmentImprovement) document.getElementById("treatmentImprovement").value = record.treatmentImprovement;
-      if (record.believeHealing) document.getElementById("believeHealing").value = record.believeHealing;
-      if (record.ownInterest) document.getElementById("ownInterest").value = record.ownInterest;
+      const hk = getSheetField(record, 'howKnow');
+      if (hk) document.getElementById("howKnowInput").value = hk;
+      const purp = getSheetField(record, 'purpose');
+      if (purp) document.getElementById("purposeInput").value = purp;
+      const hd = getSheetField(record, 'hasDisease');
+      if (hd) document.getElementById("hasDisease").value = hd;
+      const dd = getSheetField(record, 'diseaseDetails');
+      if (dd) document.getElementById("diseaseDetails").value = dd;
+      const tt = getSheetField(record, 'takingTreatment');
+      if (tt) document.getElementById("takingTreatment").value = tt;
+      const td = getSheetField(record, 'treatmentDuration');
+      if (td) document.getElementById("treatmentDuration").value = td;
+      const ti = getSheetField(record, 'treatmentImprovement');
+      if (ti) document.getElementById("treatmentImprovement").value = ti;
+      const bh = getSheetField(record, 'believeHealing');
+      if (bh) document.getElementById("believeHealing").value = bh;
+      const oi = getSheetField(record, 'ownInterest');
+      if (oi) document.getElementById("ownInterest").value = oi;
 
-      const chosenLang = (record.declarationLang || '').toLowerCase();
+      const chosenLang = getSheetField(record, 'declarationLang').toLowerCase();
       if (chosenLang === 'english') {
         const engRadio = document.querySelector('input[name="declLang"][value="english"]');
         if (engRadio) engRadio.checked = true;
@@ -1166,63 +1167,95 @@
         if (kanRadio) kanRadio.checked = true;
       }
 
-      if (record.photo) {
-        capturedPhotoBase64 = record.photo;
-        document.getElementById("capturedPhotoImg").src = record.photo;
+      const photoVal = getSheetField(record, 'photo');
+      if (photoVal && photoVal.length > 50) {
+        capturedPhotoBase64 = photoVal;
+        document.getElementById("capturedPhotoImg").src = photoVal;
         document.getElementById("capturedPhotoImg").classList.remove("hidden");
         document.getElementById("photoPlaceholder").classList.add("hidden");
         document.getElementById("removePhotoBtn").classList.remove("hidden");
       }
     }
 
+    // Robust Fetch from Google Sheet with Cache-Busting and Fallback Merging
     async function syncDataFromSheet() {
       const local = localStorage.getItem("dgm_church_entries");
-      let localEntries = local ? JSON.parse(local) : [];
+      let localEntries = [];
+      try {
+        localEntries = local ? JSON.parse(local) : [];
+      } catch (e) {
+        localEntries = [];
+      }
 
       try {
-        const res = await fetch(SCRIPT_URL);
-        const json = await res.json();
-        if (json.status === "success" && Array.isArray(json.data)) {
-          const sheetData = json.data;
+        const cacheBusterUrl = `${SCRIPT_URL}?t=${Date.now()}`;
+        const res = await fetch(cacheBusterUrl, { method: "GET", redirect: "follow" });
+        const textData = await res.text();
+        const json = JSON.parse(textData);
+
+        let incomingArray = null;
+        if (Array.isArray(json)) {
+          incomingArray = json;
+        } else if (json && Array.isArray(json.data)) {
+          incomingArray = json.data;
+        } else if (json && Array.isArray(json.records)) {
+          incomingArray = json.records;
+        }
+
+        if (incomingArray) {
+          const validSheetRows = incomingArray.filter(r => {
+            if (!r || typeof r !== "object") return false;
+            return Boolean(getSheetField(r, 'name') || getSheetField(r, 'mobile') || getSheetField(r, 'regNo'));
+          });
 
           const localMap = new Map();
           localEntries.forEach(item => {
-            if (item.id) localMap.set(item.id, item);
+            if (item && item.id) localMap.set(String(item.id), item);
           });
 
-          churchEntries = sheetData.map(sheetRow => {
-            const cached = sheetRow.id ? localMap.get(sheetRow.id) : null;
-            if (cached) {
-              const sReg = getSheetField(sheetRow, 'regNo');
-              if (!sReg || sReg.endsWith('/')) {
-                sheetRow.regNo = cached.regNo;
-                sheetRow["Reg No."] = cached.regNo;
-                sheetRow.regSeq = cached.regSeq;
+          if (validSheetRows.length > 0) {
+            churchEntries = validSheetRows.map(sheetRow => {
+              const rowId = sheetRow.id || sheetRow.ID;
+              const cached = rowId ? localMap.get(String(rowId)) : null;
+              if (cached) {
+                const sReg = getSheetField(sheetRow, 'regNo');
+                if (!sReg || sReg.endsWith('/')) {
+                  sheetRow.regNo = cached.regNo;
+                  sheetRow["Reg No."] = cached.regNo;
+                  sheetRow.regSeq = cached.regSeq;
+                }
+                if (!getSheetField(sheetRow, 'city') && cached.city) sheetRow.city = cached.city;
+                if (!getSheetField(sheetRow, 'district') && cached.district) sheetRow.district = cached.district;
+                if (!getSheetField(sheetRow, 'state') && cached.state) sheetRow.state = cached.state;
               }
-              if (!getSheetField(sheetRow, 'city') && cached.city) sheetRow.city = cached.city;
-              if (!getSheetField(sheetRow, 'district') && cached.district) sheetRow.district = cached.district;
-              if (!getSheetField(sheetRow, 'state') && cached.state) sheetRow.state = cached.state;
-            }
-            return sheetRow;
-          });
+              return sheetRow;
+            });
+          } else if (localEntries.length > 0) {
+            churchEntries = localEntries;
+          } else {
+            churchEntries = [];
+          }
 
           const offlineQueue = JSON.parse(localStorage.getItem("dgm_offline_queue") || "[]");
           offlineQueue.forEach(qItem => {
-            if (!churchEntries.some(e => e.id === qItem.id)) {
+            if (qItem && !churchEntries.some(e => (e.id || e.ID) === qItem.id)) {
               churchEntries.push(qItem);
             }
           });
 
           localStorage.setItem("dgm_church_entries", JSON.stringify(churchEntries));
           if (navigator.onLine) {
-            document.getElementById("syncStatus").innerText = "Google Sheets Live Connected";
+            document.getElementById("syncStatus").innerText = `Google Sheets Live Connected (${churchEntries.length} records)`;
             document.getElementById("syncStatusDot").className = "inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping";
           }
+        } else {
+          throw new Error("Invalid JSON structure from Apps Script");
         }
       } catch (err) {
+        console.warn("Using cached records due to fetch error:", err);
         churchEntries = localEntries;
-        document.getElementById("syncStatus").innerText = "Offline Mode (Cached)";
-        document.getElementById("syncStatusDot").className = "inline-block w-2 h-2 rounded-full bg-red-400";
+        document.getElementById("syncStatus").innerText = `Offline / Cached Mode (${churchEntries.length} records)`;
+        document.getElementById("syncStatusDot").className = "inline-block w-2 h-2 rounded-full bg-amber-400";
       }
     }
 
@@ -1277,6 +1310,7 @@
 
       const entry = {
         id: recordUniqueId,
+        isEdit: isEditingMode,
         regNo: fullRegNo,
         "Reg No.": fullRegNo,
         "Reg No": fullRegNo,
@@ -1320,7 +1354,7 @@
       };
 
       if (isEditingMode && editingRecordId) {
-        const idx = churchEntries.findIndex(r => r.id === entry.id);
+        const idx = churchEntries.findIndex(r => (r.id || r.ID) === entry.id);
         if (idx >= 0) churchEntries[idx] = entry;
         else churchEntries.push(entry);
       } else {
@@ -1335,14 +1369,14 @@
           body: JSON.stringify(entry)
         });
         const json = await res.json();
-        if (json.status !== "success") throw new Error("Server error");
+        if (json.status !== "success" && json.result !== "success") throw new Error("Server error");
         alert(isEditingMode ? `✓ Record updated (${fullRegNo})!` : `✓ New Record Saved!\nReg No: ${fullRegNo}\nDate: ${formattedEntryDate}`);
       } catch (err) {
         console.warn("Offline: Queued for background sync", err);
         let queue = JSON.parse(localStorage.getItem("dgm_offline_queue") || "[]");
         queue.push(entry);
         localStorage.setItem("dgm_offline_queue", JSON.stringify(queue));
-        alert(`Saved offline (${fullRegNo})! It will automatically sync to Google Sheets when internet connection returns.`);
+        alert(`Saved locally (${fullRegNo})! Will sync to Google Sheets automatically.`);
       } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = origText;
@@ -1446,7 +1480,6 @@
       document.getElementById("mobileCameraFile").value = "";
     }
 
-    // Photo Enlarge Handler
     function openImageZoom(imgSrc, personName) {
       if (!imgSrc) return;
       document.getElementById("enlargedZoomImg").src = imgSrc;
@@ -1459,9 +1492,9 @@
     }
 
     async function openSearchModal() {
+      document.getElementById("searchModal").classList.remove("hidden");
       await syncDataFromSheet();
       handleSearch();
-      document.getElementById("searchModal").classList.remove("hidden");
     }
 
     function closeSearchModal() {
@@ -1474,7 +1507,6 @@
       handleSearch();
     }
 
-    // Shows ALL saved records matching Name, Mobile, Aadhaar, Reg No, Visitor, City, District, or Date
     function handleSearch() {
       const q = document.getElementById("searchInput").value.toLowerCase().trim();
       const dt = document.getElementById("searchDateInput").value;
@@ -1482,8 +1514,11 @@
       const filtered = churchEntries.filter(item => {
         const visitorsStr = Array.isArray(item.visitors) 
           ? item.visitors.join(" ").toLowerCase() 
-          : [item.visitor1, item.visitor2, item.visitor3, item.visitor4, item.visitor5].filter(Boolean).join(" ").toLowerCase();
+          : (typeof item.visitors === "string" ? item.visitors.toLowerCase() : "");
 
+        const nameVal = getSheetField(item, 'name').toLowerCase();
+        const relVal = getSheetField(item, 'relativeName').toLowerCase();
+        const addrVal = getSheetField(item, 'address').toLowerCase();
         const cityVal = getSheetField(item, 'city').toLowerCase();
         const distVal = getSheetField(item, 'district').toLowerCase();
         const stateVal = getSheetField(item, 'state').toLowerCase();
@@ -1492,9 +1527,9 @@
         const fullReg = getFullRegNoFromRecord(item).toLowerCase();
 
         const matchText = !q || 
-          (item.name && String(item.name).toLowerCase().includes(q)) ||
-          (item.relativeName && String(item.relativeName).toLowerCase().includes(q)) ||
-          (item.address && String(item.address).toLowerCase().includes(q)) ||
+          nameVal.includes(q) ||
+          relVal.includes(q) ||
+          addrVal.includes(q) ||
           cityVal.includes(q) ||
           distVal.includes(q) ||
           stateVal.includes(q) ||
@@ -1536,10 +1571,12 @@
 
         const displayDate = extractRecordDate(r);
         const fullReg = getFullRegNoFromRecord(r);
-        const hasPhoto = Boolean(r.photo && r.photo.length > 50);
+        const photoStr = getSheetField(r, 'photo');
+        const hasPhoto = Boolean(photoStr && photoStr.length > 50);
+        const nameStr = getSheetField(r, 'name') || '-';
         const cVal = getSheetField(r, 'city');
         const dVal = getSheetField(r, 'district');
-        const cityDist = [cVal, dVal].filter(Boolean).join(", ") || r.address || "-";
+        const cityDist = [cVal, dVal].filter(Boolean).join(", ") || getSheetField(r, 'address') || "-";
         const mobVal = getSheetField(r, 'mobile') || "-";
         const aadhVal = getSheetField(r, 'aadhaar');
 
@@ -1547,14 +1584,14 @@
           <td class="p-2 text-center">
             ${hasPhoto 
               ? `<button type="button" class="btn-zoom-img inline-block w-8 h-8 rounded-full border border-amber-400 overflow-hidden shadow-sm hover:scale-110 transition" title="Click to enlarge photo">
-                   <img src="${r.photo}" class="w-full h-full object-cover">
+                   <img src="${photoStr}" class="w-full h-full object-cover">
                  </button>` 
               : `<span class="inline-block w-7 h-7 rounded-full bg-slate-800 border border-slate-700 text-slate-500 text-[10px] flex items-center justify-center mx-auto"><i class="fa-solid fa-user"></i></span>`
             }
           </td>
           <td class="p-2.5 text-[11px] font-mono font-bold text-amber-400 whitespace-nowrap">${fullReg}</td>
           <td class="p-2.5 text-[11px] font-mono text-slate-200 whitespace-nowrap">${displayDate}</td>
-          <td class="p-2.5 font-semibold text-slate-100">${r.name || '-'}</td>
+          <td class="p-2.5 font-semibold text-slate-100">${nameStr}</td>
           <td class="p-2.5 text-[11px] font-mono text-slate-300 whitespace-nowrap">
             <div><i class="fa-solid fa-phone text-[9px] text-amber-400 mr-1"></i>${mobVal}</div>
             ${aadhVal && aadhVal !== 'Not Provided' ? `<div class="text-[10px] text-slate-400">ID: ${aadhVal}</div>` : ''}
@@ -1574,7 +1611,7 @@
         `;
 
         if (hasPhoto) {
-          tr.querySelector('.btn-zoom-img').addEventListener('click', () => openImageZoom(r.photo, r.name));
+          tr.querySelector('.btn-zoom-img').addEventListener('click', () => openImageZoom(photoStr, nameStr));
         }
         tr.querySelector('.btn-edit').addEventListener('click', () => editRecord(r));
         tr.querySelector('.btn-view').addEventListener('click', () => loadAndPreviewRecord(r));
@@ -1587,7 +1624,7 @@
     function editRecord(rec) {
       closeSearchModal();
       isEditingMode = true;
-      editingRecordId = rec.id || null;
+      editingRecordId = rec.id || rec.ID || null;
       document.getElementById("formModalTitle").innerText = "Edit Entry / ತಿದ್ದುಪಡಿ";
       document.getElementById("registrationModal").classList.remove("hidden");
       
@@ -1599,24 +1636,24 @@
       updateRegNoPreview();
     }
 
-    // PREVIEW, PRINT & PDF RENDER ENGINE
     async function loadAndPreviewRecord(rec) {
       activePreviewRecord = rec;
 
       const cleanRegDate = extractRecordDate(rec);
       const cleanRegNo = getFullRegNoFromRecord(rec);
-      const cleanDob = rec.dobFormatted || parseDateToDDMMYYYY(rec.dob);
+      const cleanDob = rec.dobFormatted || parseDateToDDMMYYYY(getSheetField(rec, 'dob'));
+      const nameStr = getSheetField(rec, 'name') || '-';
 
       const regElem = document.getElementById("printRegNoText");
       const dateElem = document.getElementById("printDateText");
       if (regElem) regElem.innerText = `Reg No: ${cleanRegNo}`;
       if (dateElem) dateElem.innerText = `Date: ${cleanRegDate}`;
 
-      document.getElementById("pName").innerText = rec.name || '-';
-      document.getElementById("pRelative").innerText = rec.relativeName || '-';
+      document.getElementById("pName").innerText = nameStr;
+      document.getElementById("pRelative").innerText = getSheetField(rec, 'relativeName') || '-';
       document.getElementById("pAadhaar").innerText = getSheetField(rec, 'aadhaar') || 'Not Provided';
       document.getElementById("pMobile").innerText = getSheetField(rec, 'mobile') || '-';
-      document.getElementById("pAddress").innerText = rec.address || '-';
+      document.getElementById("pAddress").innerText = getSheetField(rec, 'address') || '-';
 
       let pinVal = getSheetField(rec, 'pincode');
       let cityVal = getSheetField(rec, 'city');
@@ -1634,7 +1671,7 @@
             if (!stateVal) stateVal = po.State || "Karnataka";
           }
         } catch (e) {
-          console.warn("Offline or failed to auto-resolve PIN for print preview");
+          console.warn("Offline or failed to auto-resolve PIN");
         }
       }
 
@@ -1643,25 +1680,35 @@
       document.getElementById("pDistrict").innerText = distVal || '-';
       document.getElementById("pState").innerText = stateVal || 'Karnataka';
 
-      document.getElementById("pGender").innerText = rec.gender === 'F' ? 'Female / ಹೆಣ್ಣು' : (rec.gender === 'Other' ? 'Other / ಇತರ' : 'Male / ಗಂಡು');
+      const genStr = getSheetField(rec, 'gender');
+      document.getElementById("pGender").innerText = genStr === 'F' ? 'Female / ಹೆಣ್ಣು' : (genStr === 'Other' ? 'Other / ಇತರ' : 'Male / ಗಂಡು');
       document.getElementById("pDob").innerText = cleanDob;
 
       const visitorsList = Array.isArray(rec.visitors) && rec.visitors.length > 0
         ? rec.visitors
-        : [rec.visitor1, rec.visitor2, rec.visitor3, rec.visitor4, rec.visitor5].filter(Boolean);
+        : (typeof rec.visitors === "string" && rec.visitors.trim() !== ""
+            ? rec.visitors.split(",").map(s => s.trim()).filter(Boolean)
+            : [rec.visitor1, rec.visitor2, rec.visitor3, rec.visitor4, rec.visitor5].filter(Boolean));
       document.getElementById("pVisitors").innerText = visitorsList.length > 0 ? visitorsList.join(", ") : 'None';
 
-      document.getElementById("pHowKnow").innerText = rec.howKnow || '-';
-      document.getElementById("pPurpose").innerText = rec.purpose || '-';
-      document.getElementById("pDisease").innerText = `${rec.hasDisease || 'No'} ${rec.diseaseDetails ? '(' + rec.diseaseDetails + ')' : ''}`;
-      document.getElementById("pTreatment").innerText = `${rec.takingTreatment || 'No'} ${rec.treatmentDuration ? '(' + rec.treatmentDuration + ')' : ''}`;
-      document.getElementById("pImprovement").innerText = rec.treatmentImprovement || 'No';
-      document.getElementById("pHealing").innerText = rec.believeHealing || 'Yes';
-      document.getElementById("pInterest").innerText = rec.ownInterest || 'Yes';
+      document.getElementById("pHowKnow").innerText = getSheetField(rec, 'howKnow') || '-';
+      document.getElementById("pPurpose").innerText = getSheetField(rec, 'purpose') || '-';
+
+      const hasDis = getSheetField(rec, 'hasDisease') || 'No';
+      const disDet = getSheetField(rec, 'diseaseDetails');
+      document.getElementById("pDisease").innerText = `${hasDis} ${disDet ? '(' + disDet + ')' : ''}`;
+
+      const takTrt = getSheetField(rec, 'takingTreatment') || 'No';
+      const trtDur = getSheetField(rec, 'treatmentDuration');
+      document.getElementById("pTreatment").innerText = `${takTrt} ${trtDur ? '(' + trtDur + ')' : ''}`;
+
+      document.getElementById("pImprovement").innerText = getSheetField(rec, 'treatmentImprovement') || 'No';
+      document.getElementById("pHealing").innerText = getSheetField(rec, 'believeHealing') || 'Yes';
+      document.getElementById("pInterest").innerText = getSheetField(rec, 'ownInterest') || 'Yes';
 
       const declBox = document.getElementById("printDeclarationBox");
-      const personName = rec.name || '__________________________';
-      const isEnglish = (rec.declarationLang || '').toLowerCase().trim() === 'english';
+      const personName = nameStr !== '-' ? nameStr : '__________________________';
+      const isEnglish = getSheetField(rec, 'declarationLang').toLowerCase() === 'english';
 
       if (isEnglish) {
         declBox.className = "text-[11.5px] leading-snug text-black text-justify bg-slate-50 p-2.5 rounded border border-slate-300 mt-1.5 font-sans";
@@ -1682,8 +1729,9 @@
       refreshAllLogos();
 
       const photoBox = document.getElementById("printPhotoContainer");
-      if (rec.photo && rec.photo.length > 50) {
-        photoBox.innerHTML = `<img src="${rec.photo}" class="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onclick="openImageZoom('${rec.photo}', '${(rec.name || 'Visitor').replace(/'/g, "\\'")}')">`;
+      const photoStr = getSheetField(rec, 'photo');
+      if (photoStr && photoStr.length > 50) {
+        photoBox.innerHTML = `<img src="${photoStr}" class="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onclick="openImageZoom('${photoStr}', '${nameStr.replace(/'/g, "\\'")}')">`;
       } else {
         photoBox.innerHTML = `<span class="text-[11px] text-slate-400 font-medium">Photo</span>`;
       }
@@ -1695,7 +1743,6 @@
       document.getElementById("printPreviewModal").classList.add("hidden");
     }
 
-    // Single-Page Print Handler for Android & Desktop
     function triggerCleanSinglePrint() {
       const sourceArea = document.getElementById("printableArea");
       const printMount = document.getElementById("androidPrintMount");
@@ -1706,9 +1753,10 @@
     function downloadActiveLetterheadPDF() {
       refreshAllLogos();
       const element = document.getElementById("printableArea");
+      const pName = getSheetField(activePreviewRecord, 'name') || 'Registration';
       const opt = {
         margin: [5, 5, 5, 5],
-        filename: `DGM_Bethel_${(activePreviewRecord?.name || 'Registration').replace(/\s+/g, '_')}.pdf`,
+        filename: `DGM_Bethel_${pName.replace(/\s+/g, '_')}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0 },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
@@ -1779,7 +1827,6 @@
       setTimeout(() => downloadActiveLetterheadPDF(), 350);
     }
 
-    // ================= SHARING MODAL LOGIC =================
     function promptShareModal(title, text) {
       pendingShareData = {
         title: title,
@@ -1842,14 +1889,15 @@
     }
 
     function shareSingleRecord(rec) {
-      const title = `DGM Registration - ${rec.name}`;
+      const nameStr = getSheetField(rec, 'name') || 'Visitor';
+      const title = `DGM Registration - ${nameStr}`;
       const cleanRegDate = extractRecordDate(rec);
       const regId = getFullRegNoFromRecord(rec);
       const cVal = getSheetField(rec, 'city');
       const dVal = getSheetField(rec, 'district');
       const sVal = getSheetField(rec, 'state');
-      const cityDist = [cVal, dVal, sVal].filter(Boolean).join(", ") || rec.address || '-';
-      const text = `DGM Bethel Church Registration Details:\nReg No: ${regId}\nName: ${rec.name}\nDate: ${cleanRegDate}\nLocation: ${cityDist}\nMobile: ${getSheetField(rec, 'mobile')}\nWebsite: www.dgmbethelchurch.org`;
+      const cityDist = [cVal, dVal, sVal].filter(Boolean).join(", ") || getSheetField(rec, 'address') || '-';
+      const text = `DGM Bethel Church Registration Details:\nReg No: ${regId}\nName: ${nameStr}\nDate: ${cleanRegDate}\nLocation: ${cityDist}\nMobile: ${getSheetField(rec, 'mobile')}\nWebsite: www.dgmbethelchurch.org`;
       promptShareModal(title, text);
     }
 
