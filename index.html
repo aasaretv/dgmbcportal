@@ -551,6 +551,10 @@
           <span id="searchCountBadge" class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full text-[10px] font-mono">0 records</span>
         </div>
         <div class="flex items-center space-x-2">
+          <button onclick="forceManualSync()" id="manualSyncBtn" class="px-2.5 py-1 bg-amber-600/30 hover:bg-amber-600/50 text-amber-300 border border-amber-500/40 rounded text-xs flex items-center space-x-1 transition">
+            <i class="fa-solid fa-rotate" id="syncBtnIcon"></i>
+            <span>Sync Sheet</span>
+          </button>
           <button onclick="shareDirectorySummary()" class="px-2.5 py-1 bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 rounded text-xs flex items-center space-x-1">
             <i class="fa-solid fa-share-nodes"></i>
             <span>Share List</span>
@@ -592,7 +596,7 @@
             <tbody id="searchResultsTableBody"></tbody>
           </table>
         </div>
-        <div id="noSearchResults" class="text-center py-8 text-slate-500 text-xs hidden">No matching records found.</div>
+        <div id="noSearchResults" class="text-center py-8 text-slate-400 text-xs hidden">No matching records found. Click "Sync Sheet" to reload from Google Sheets.</div>
       </div>
 
       <div class="p-2.5 bg-slate-800 border-t border-slate-700 flex justify-end">
@@ -765,7 +769,7 @@
 
     // Universal Field Extractor (Handles any Google Sheet header case or alias)
     function getSheetField(rec, type) {
-      if (!rec) return "";
+      if (!rec || typeof rec !== "object") return "";
       const keyMap = {
         name: ["name", "Name", "NAME", "Full Name", "full name", "visitor_name", "ಹೆಸರು"],
         relativeName: ["relativeName", "RelativeName", "Relative", "relative", "Father/Husband Name", "father_name"],
@@ -788,8 +792,8 @@
         treatmentImprovement: ["treatmentImprovement", "TreatmentImprovement", "improvement"],
         believeHealing: ["believeHealing", "BelieveHealing", "healing"],
         ownInterest: ["ownInterest", "OwnInterest", "interest"],
-        declarationLang: ["declarationLang", "DeclarationLang", "lang"],
-        photo: ["photo", "Photo", "PHOTO", "image"]
+        declarationLang: ["declarationLang", "DeclarationLang", "declaration_lang", "declLang", "Declaration Language", "language", "Language"],
+        photo: ["photo", "Photo", "PHOTO", "image", "Image", "picture"]
       };
       const candidates = keyMap[type] || [type];
       for (const k of candidates) {
@@ -807,6 +811,76 @@
         }
       }
       return "";
+    }
+
+    // Universal Row Normalizer: Maps any Google Sheet row object or array by header name OR column position
+    function normalizeSheetRow(rawRow, index) {
+      if (!rawRow || typeof rawRow !== "object") return null;
+
+      const keys = Object.keys(rawRow);
+      const values = Object.values(rawRow);
+
+      // Skip completely blank rows
+      const nonEmptyValues = values.filter(v => v !== "" && v !== null && v !== undefined);
+      if (nonEmptyValues.length === 0) return null;
+
+      function findByPartialKey(searchTerms) {
+        for (const k of keys) {
+          const cleanK = String(k).trim().toLowerCase();
+          for (const term of searchTerms) {
+            if (cleanK === term || cleanK.includes(term)) {
+              const val = rawRow[k];
+              if (val !== undefined && val !== null && String(val).trim() !== "") {
+                return String(val).trim();
+              }
+            }
+          }
+        }
+        return "";
+      }
+
+      const norm = { ...rawRow };
+
+      norm.name = getSheetField(rawRow, 'name') || findByPartialKey(["name", "ಹೆಸರು", "visitor", "applicant", "person"]);
+      norm.mobile = getSheetField(rawRow, 'mobile') || findByPartialKey(["mobile", "phone", "contact", "cell", "ಮೊಬೈಲ್"]);
+      norm.aadhaar = getSheetField(rawRow, 'aadhaar') || findByPartialKey(["aadhaar", "aadhar", "ಆಧಾರ್", "uid"]);
+      norm.regNo = getSheetField(rawRow, 'regNo') || findByPartialKey(["reg", "registration", "serial", "sl"]);
+      norm.relativeName = getSheetField(rawRow, 'relativeName') || findByPartialKey(["relative", "father", "husband", "ತಂದೆ", "ಗಂಡ"]);
+      norm.address = getSheetField(rawRow, 'address') || findByPartialKey(["address", "street", "ವಿಳಾಸ"]);
+      norm.city = getSheetField(rawRow, 'city') || findByPartialKey(["city", "place", "town", "village", "taluk", "ಊರು", "ನಗರ"]);
+      norm.district = getSheetField(rawRow, 'district') || findByPartialKey(["district", "dist", "ಜಿಲ್ಲೆ"]);
+      norm.state = getSheetField(rawRow, 'state') || findByPartialKey(["state", "ರಾಜ್ಯ"]) || "Karnataka";
+      norm.pincode = getSheetField(rawRow, 'pincode') || findByPartialKey(["pin", "zip", "ಕೋಡ್"]);
+      norm.declarationLang = getSheetField(rawRow, 'declarationLang') || findByPartialKey(["decl", "lang", "ಭಾಷೆ"]);
+      norm.photo = getSheetField(rawRow, 'photo') || findByPartialKey(["photo", "img", "image", "pic"]);
+
+      // Fallback scan: if photo or declarationLang were stored in unnamed columns, detect them by value pattern
+      if (!norm.photo) {
+        const foundImg = nonEmptyValues.find(v => String(v).trim().startsWith("data:image/"));
+        if (foundImg) norm.photo = String(foundImg).trim();
+      }
+      if (!norm.declarationLang) {
+        const foundLang = nonEmptyValues.find(v => {
+          const s = String(v).trim().toLowerCase();
+          return s === "english" || s === "kannada";
+        });
+        if (foundLang) norm.declarationLang = String(foundLang).trim().toLowerCase();
+      }
+
+      if (!norm.mobile) {
+        const foundPhone = nonEmptyValues.find(v => /^[6-9]\d{9}$/.test(String(v).trim()));
+        if (foundPhone) norm.mobile = String(foundPhone).trim();
+      }
+      if (!norm.name) {
+        const foundName = nonEmptyValues.find(v => {
+          const s = String(v).trim();
+          return s.length > 1 && isNaN(s) && !s.startsWith("DGM_") && !s.toLowerCase().startsWith("dgmbc/") && !s.startsWith("data:image") && !/^\d{4}-\d{2}-\d{2}/.test(s) && !/^\d{2}\/\d{2}\/\d{4}/.test(s);
+        });
+        if (foundName) norm.name = String(foundName).trim();
+      }
+
+      if (!norm.id) norm.id = rawRow.ID || `SHEET_ROW_${index + 1}`;
+      return norm;
     }
 
     function getFullRegNoFromRecord(rec) {
@@ -862,6 +936,15 @@
         }
       }
       localStorage.setItem("dgm_offline_queue", JSON.stringify(remaining));
+    }
+
+    async function forceManualSync() {
+      const icon = document.getElementById("syncBtnIcon");
+      if (icon) icon.classList.add("fa-spin");
+      await processOfflineQueue();
+      await syncDataFromSheet();
+      handleSearch();
+      if (icon) icon.classList.remove("fa-spin");
     }
 
     function checkAuthLock() {
@@ -1177,8 +1260,11 @@
       }
     }
 
-    // Robust Fetch from Google Sheet with Cache-Busting and Fallback Merging
+    // Robust Fetch from Google Sheet with Local Photo & Language Preservation
     async function syncDataFromSheet() {
+      const statusEl = document.getElementById("syncStatus");
+      const dotEl = document.getElementById("syncStatusDot");
+
       const local = localStorage.getItem("dgm_church_entries");
       let localEntries = [];
       try {
@@ -1188,9 +1274,23 @@
       }
 
       try {
-        const cacheBusterUrl = `${SCRIPT_URL}?t=${Date.now()}`;
-        const res = await fetch(cacheBusterUrl, { method: "GET", redirect: "follow" });
+        if (statusEl) statusEl.innerText = "Syncing records from Google Sheets...";
+
+        const res = await fetch(SCRIPT_URL, {
+          method: "GET",
+          redirect: "follow"
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+
         const textData = await res.text();
+        
+        if (textData.trim().startsWith("<!DOCTYPE") || textData.trim().startsWith("<html")) {
+          throw new Error("Permission Denied: Set Apps Script access to 'Anyone'");
+        }
+
         const json = JSON.parse(textData);
 
         let incomingArray = null;
@@ -1200,26 +1300,58 @@
           incomingArray = json.data;
         } else if (json && Array.isArray(json.records)) {
           incomingArray = json.records;
+        } else if (json && Array.isArray(json.values)) {
+          incomingArray = json.values;
+        } else if (json && typeof json === "object") {
+          const firstArrKey = Object.keys(json).find(k => Array.isArray(json[k]));
+          if (firstArrKey) incomingArray = json[firstArrKey];
         }
 
         if (incomingArray) {
-          const validSheetRows = incomingArray.filter(r => {
-            if (!r || typeof r !== "object") return false;
-            return Boolean(getSheetField(r, 'name') || getSheetField(r, 'mobile') || getSheetField(r, 'regNo'));
-          });
+          if (incomingArray.length > 0 && Array.isArray(incomingArray[0])) {
+            const headers = incomingArray[0].map((h, i) => String(h || `col_${i}`).trim());
+            const converted = [];
+            for (let i = 1; i < incomingArray.length; i++) {
+              const row = incomingArray[i];
+              const obj = {};
+              headers.forEach((h, idx) => {
+                obj[h] = row[idx];
+              });
+              converted.push(obj);
+            }
+            incomingArray = converted;
+          }
 
-          const localMap = new Map();
+          const normalizedSheetRows = incomingArray
+            .map((r, idx) => normalizeSheetRow(r, idx))
+            .filter(Boolean);
+
+          // Map local entries by ID AND by RegNo / Mobile+Name so photo and declarationLang are never lost
+          const localById = new Map();
+          const localByReg = new Map();
+          const localByPerson = new Map();
+
           localEntries.forEach(item => {
-            if (item && item.id) localMap.set(String(item.id), item);
+            if (!item) return;
+            if (item.id) localById.set(String(item.id), item);
+            const rNo = getFullRegNoFromRecord(item);
+            if (rNo && rNo !== "-") localByReg.set(rNo.toLowerCase(), item);
+            const pKey = `${getSheetField(item, 'name').toLowerCase()}_${getSheetField(item, 'mobile')}`;
+            if (pKey !== "_") localByPerson.set(pKey, item);
           });
 
-          if (validSheetRows.length > 0) {
-            churchEntries = validSheetRows.map(sheetRow => {
+          if (normalizedSheetRows.length > 0) {
+            churchEntries = normalizedSheetRows.map(sheetRow => {
               const rowId = sheetRow.id || sheetRow.ID;
-              const cached = rowId ? localMap.get(String(rowId)) : null;
+              const sReg = getFullRegNoFromRecord(sheetRow);
+              const pKey = `${getSheetField(sheetRow, 'name').toLowerCase()}_${getSheetField(sheetRow, 'mobile')}`;
+
+              const cached = (rowId && localById.get(String(rowId)))
+                || (sReg && localByReg.get(sReg.toLowerCase()))
+                || localByPerson.get(pKey);
+
               if (cached) {
-                const sReg = getSheetField(sheetRow, 'regNo');
-                if (!sReg || sReg.endsWith('/')) {
+                if (!sheetRow.regNo || String(sheetRow.regNo).endsWith('/')) {
                   sheetRow.regNo = cached.regNo;
                   sheetRow["Reg No."] = cached.regNo;
                   sheetRow.regSeq = cached.regSeq;
@@ -1227,13 +1359,18 @@
                 if (!getSheetField(sheetRow, 'city') && cached.city) sheetRow.city = cached.city;
                 if (!getSheetField(sheetRow, 'district') && cached.district) sheetRow.district = cached.district;
                 if (!getSheetField(sheetRow, 'state') && cached.state) sheetRow.state = cached.state;
+                // Restore English/Kannada declaration language and Photo if Google Sheet didn't return them
+                if (!getSheetField(sheetRow, 'declarationLang') && cached.declarationLang) {
+                  sheetRow.declarationLang = cached.declarationLang;
+                }
+                if (!getSheetField(sheetRow, 'photo') && cached.photo) {
+                  sheetRow.photo = cached.photo;
+                }
               }
               return sheetRow;
             });
-          } else if (localEntries.length > 0) {
-            churchEntries = localEntries;
           } else {
-            churchEntries = [];
+            churchEntries = localEntries;
           }
 
           const offlineQueue = JSON.parse(localStorage.getItem("dgm_offline_queue") || "[]");
@@ -1244,18 +1381,17 @@
           });
 
           localStorage.setItem("dgm_church_entries", JSON.stringify(churchEntries));
-          if (navigator.onLine) {
-            document.getElementById("syncStatus").innerText = `Google Sheets Live Connected (${churchEntries.length} records)`;
-            document.getElementById("syncStatusDot").className = "inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping";
-          }
+
+          if (statusEl) statusEl.innerText = `Google Sheets Connected (${churchEntries.length} records loaded)`;
+          if (dotEl) dotEl.className = "inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping";
         } else {
-          throw new Error("Invalid JSON structure from Apps Script");
+          throw new Error(json.message || "Sheet returned empty or unknown format");
         }
       } catch (err) {
-        console.warn("Using cached records due to fetch error:", err);
+        console.error("Google Sheet Sync Error:", err);
         churchEntries = localEntries;
-        document.getElementById("syncStatus").innerText = `Offline / Cached Mode (${churchEntries.length} records)`;
-        document.getElementById("syncStatusDot").className = "inline-block w-2 h-2 rounded-full bg-amber-400";
+        if (statusEl) statusEl.innerText = `Sync Notice: ${err.message} (${churchEntries.length} local records)`;
+        if (dotEl) dotEl.className = "inline-block w-2 h-2 rounded-full bg-amber-400";
       }
     }
 
@@ -1350,7 +1486,10 @@
         believeHealing: document.getElementById("believeHealing").value,
         ownInterest: document.getElementById("ownInterest").value,
         declarationLang: declLang,
-        photo: capturedPhotoBase64 || ""
+        "Declaration Language": declLang,
+        language: declLang,
+        photo: capturedPhotoBase64 || "",
+        Photo: capturedPhotoBase64 || ""
       };
 
       if (isEditingMode && editingRecordId) {
@@ -1439,14 +1578,44 @@
       document.getElementById("cameraContainer").classList.add("hidden");
     }
 
+    // Smart Image Compressor: Guarantees photo Base64 stays under Google Sheets' 50,000-character cell limit
+    function compressImageDataUrl(dataUrl, callback) {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement("canvas");
+        const maxW = 300;
+        const maxH = 360;
+        let w = img.width;
+        let h = img.height;
+
+        if (w > maxW || h > maxH) {
+          const ratio = Math.min(maxW / w, maxH / h);
+          w = Math.round(w * ratio);
+          h = Math.round(h * ratio);
+        }
+
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+
+        let compressed = canvas.toDataURL("image/jpeg", 0.65);
+        if (compressed.length > 45000) {
+          compressed = canvas.toDataURL("image/jpeg", 0.45);
+        }
+        callback(compressed);
+      };
+      img.src = dataUrl;
+    }
+
     function takeSnapshot() {
       const video = document.getElementById("cameraVideo");
       const canvas = document.getElementById("cameraCanvas");
-      canvas.width = video.videoWidth || 320;
-      canvas.height = video.videoHeight || 240;
+      canvas.width = 300;
+      canvas.height = 360;
       const ctx = canvas.getContext("2d");
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      capturedPhotoBase64 = canvas.toDataURL("image/jpeg", 0.75);
+      capturedPhotoBase64 = canvas.toDataURL("image/jpeg", 0.65);
 
       setPhotoPreview(capturedPhotoBase64);
       stopCamera();
@@ -1458,8 +1627,10 @@
 
       const reader = new FileReader();
       reader.onload = function(e) {
-        capturedPhotoBase64 = e.target.result;
-        setPhotoPreview(capturedPhotoBase64);
+        compressImageDataUrl(e.target.result, function(compressedBase64) {
+          capturedPhotoBase64 = compressedBase64;
+          setPhotoPreview(capturedPhotoBase64);
+        });
       };
       reader.readAsDataURL(file);
     }
@@ -1493,6 +1664,7 @@
 
     async function openSearchModal() {
       document.getElementById("searchModal").classList.remove("hidden");
+      handleSearch();
       await syncDataFromSheet();
       handleSearch();
     }
@@ -1708,7 +1880,7 @@
 
       const declBox = document.getElementById("printDeclarationBox");
       const personName = nameStr !== '-' ? nameStr : '__________________________';
-      const isEnglish = getSheetField(rec, 'declarationLang').toLowerCase() === 'english';
+      const isEnglish = getSheetField(rec, 'declarationLang').toLowerCase().includes('eng');
 
       if (isEnglish) {
         declBox.className = "text-[11.5px] leading-snug text-black text-justify bg-slate-50 p-2.5 rounded border border-slate-300 mt-1.5 font-sans";
