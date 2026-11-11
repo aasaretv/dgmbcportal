@@ -87,9 +87,9 @@
   <!-- Dedicated Single-Page Print Mount (Populated automatically on Print) -->
   <div id="androidPrintMount"></div>
 
-  <!-- ================= RECTIFIED EMBEDDED LOGO TEMPLATE ================= -->
+  <!-- ================= BORDERLESS EMBEDDED LOGO TEMPLATE ================= -->
   <template id="dgmLogoSvg">
-    <div class="w-full h-full rounded-full overflow-hidden bg-white flex items-center justify-center p-0.5 shadow-sm border-2 border-red-600">
+    <div class="w-full h-full rounded-full overflow-hidden bg-white flex items-center justify-center shadow-sm">
       <img 
         src="https://lh3.googleusercontent.com/d/1YAShVtP-OR8r4NJxNgGlgba1oy3JKUKf" 
         alt="DGM Bethel Church Logo" 
@@ -102,7 +102,7 @@
   <!-- ================= PORTAL LOCK SCREEN MODAL ================= -->
   <div id="lockScreenModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-md p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl">
-      <div class="w-20 h-20 mx-auto mb-4 bg-white rounded-full p-0.5 shadow border-2 border-red-600 logo-insert"></div>
+      <div class="w-20 h-20 mx-auto mb-4 bg-white rounded-full shadow logo-insert"></div>
       <h2 class="cinzel text-base sm:text-lg font-bold text-amber-400 tracking-wider mb-5">DGM - BETHEL CHURCH</h2>
       <form onsubmit="handleUnlock(event)" class="space-y-4">
         <div>
@@ -144,18 +144,24 @@
   </div>
 
   <!-- ================= IMAGE ENLARGE MODAL ================= -->
-  <div id="imageZoomModal" class="fixed inset-0 z-[60] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 hidden">
-    <div class="relative bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-4 flex flex-col items-center shadow-2xl">
+  <div id="imageZoomModal" onclick="if(event.target === this) closeImageZoomModal()" class="fixed inset-0 z-[60] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 hidden">
+    <div class="relative bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-4 flex flex-col items-center shadow-2xl">
       <button onclick="closeImageZoomModal()" class="absolute top-3 right-3 text-slate-400 hover:text-white text-xl p-1 z-10">
         <i class="fa-solid fa-xmark"></i>
       </button>
-      <h4 id="zoomModalTitle" class="text-xs font-bold text-amber-400 mb-3 truncate max-w-[280px]">Photo Preview</h4>
-      <div class="w-full max-h-[70vh] bg-black/60 rounded-xl overflow-hidden flex items-center justify-center border border-slate-800">
-        <img id="enlargedZoomImg" src="" alt="Enlarged" class="max-h-[68vh] w-auto max-w-full object-contain">
+      <h4 id="zoomModalTitle" class="text-xs sm:text-sm font-bold text-amber-400 mb-3 truncate max-w-[280px]">Photo Preview</h4>
+      <div class="w-full max-h-[72vh] bg-black/60 rounded-xl overflow-hidden flex items-center justify-center border border-slate-800 p-1">
+        <img id="enlargedZoomImg" src="" alt="Enlarged" class="max-h-[70vh] w-auto max-w-full object-contain rounded-lg">
       </div>
-      <button onclick="closeImageZoomModal()" class="mt-4 px-5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs font-semibold">
-        Close
-      </button>
+      <div class="mt-4 flex space-x-3">
+        <a id="downloadZoomImgBtn" href="" download="DGM_Visitor_Photo.jpg" class="px-4 py-1.5 bg-amber-600 hover:bg-amber-500 text-slate-950 rounded text-xs font-bold flex items-center space-x-1.5 shadow">
+          <i class="fa-solid fa-download"></i>
+          <span>Download Photo</span>
+        </a>
+        <button onclick="closeImageZoomModal()" class="px-5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded text-xs font-semibold">
+          Close
+        </button>
+      </div>
     </div>
   </div>
 
@@ -222,7 +228,7 @@
     </header>
 
     <section class="flex flex-col items-center text-center my-auto py-6 max-w-4xl w-full px-2">
-      <div class="w-28 h-28 sm:w-36 sm:h-36 bg-white rounded-full p-1 shadow-2xl border-4 border-red-600 mb-4 logo-insert"></div>
+      <div class="w-28 h-28 sm:w-36 sm:h-36 bg-white rounded-full shadow-2xl mb-4 logo-insert"></div>
       <h1 class="cinzel text-2xl sm:text-4xl font-black text-amber-400 tracking-wider mb-1">DGM - BETHEL CHURCH TRUST<sup>&reg;</sup></h1>
       <p class="kannada text-xs sm:text-base font-semibold text-slate-300 mb-3 tracking-wide">ಡಿಜಿಎಮ್ ಬೇತೇಲ್ ಚರ್ಚ್ ಟ್ರಸ್ಟ್ &bull; Form / ನಮೂನೆ</p>
 
@@ -256,7 +262,7 @@
       
       <div class="bg-slate-800 px-3 sm:px-4 py-2.5 sm:py-3 border-b border-slate-700 flex justify-between items-center shrink-0">
         <div class="flex items-center space-x-2">
-          <div class="w-7 h-7 rounded-full bg-white p-0.5 border border-red-600 logo-insert"></div>
+          <div class="w-7 h-7 rounded-full bg-white logo-insert"></div>
           <div>
             <h3 class="text-xs sm:text-sm font-bold text-amber-400" id="formModalTitle">New Entry / ಹೊಸ ನೋಂದಣಿ</h3>
             <p class="text-[9px] sm:text-[10px] text-slate-400">DGM-Bethel Church Trust Registration</p>
@@ -288,7 +294,7 @@
           </div>
 
           <div class="flex items-center space-x-2.5 self-start sm:self-auto">
-            <div id="photoPreviewContainer" class="w-14 h-16 bg-slate-800 border-2 border-dashed border-slate-600 rounded flex items-center justify-center overflow-hidden">
+            <div id="photoPreviewContainer" onclick="if(capturedPhotoBase64) openImageZoom(capturedPhotoBase64, document.getElementById('nameInput').value || 'Visitor')" class="w-14 h-16 bg-slate-800 border-2 border-dashed border-slate-600 rounded flex items-center justify-center overflow-hidden cursor-pointer hover:border-amber-400 transition" title="Click to enlarge photo">
               <img id="capturedPhotoImg" src="" alt="Photo" class="w-full h-full object-cover hidden">
               <span id="photoPlaceholder" class="text-[9px] text-slate-400 text-center px-1"><i class="fa-solid fa-user block text-sm"></i>No Photo</span>
             </div>
@@ -422,15 +428,30 @@
           </div>
         </div>
 
-        <!-- Visitors -->
-        <div class="bg-slate-850 p-2.5 rounded-lg border border-slate-800 space-y-1.5">
-          <label class="block font-medium text-amber-400 text-xs">ನಿಮ್ಮೊಂದಿಗೆ ಬಂದವರ ಹೆಸರು / Visitors with you (Up to 5):</label>
-          <div class="grid grid-cols-1 sm:grid-cols-5 gap-2">
-            <input type="text" id="visitor1" placeholder="1. Visitor" class="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-amber-400 focus:outline-none">
-            <input type="text" id="visitor2" placeholder="2. Visitor" class="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-amber-400 focus:outline-none">
-            <input type="text" id="visitor3" placeholder="3. Visitor" class="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-amber-400 focus:outline-none">
-            <input type="text" id="visitor4" placeholder="4. Visitor" class="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-amber-400 focus:outline-none">
-            <input type="text" id="visitor5" placeholder="5. Visitor" class="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-amber-400 focus:outline-none">
+        <!-- Visitors & Disease Option Under Each Visitor -->
+        <div class="bg-slate-850 p-2.5 rounded-lg border border-slate-800 space-y-2">
+          <label class="block font-medium text-amber-400 text-xs">ನಿಮ್ಮೊಂದಿಗೆ ಬಂದವರ ಹೆಸರು ಮತ್ತು ಕಾಯಿಲೆ / Visitors with you & Disease (Up to 5):</label>
+          <div class="grid grid-cols-1 sm:grid-cols-5 gap-2.5">
+            <div class="space-y-1 bg-slate-900/60 p-1.5 rounded border border-slate-800">
+              <input type="text" id="visitor1" placeholder="1. Visitor Name" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-amber-400 focus:outline-none">
+              <input type="text" id="visitorDisease1" placeholder="ಕಾಯಿಲೆ / Disease (if any)" class="w-full bg-slate-800/80 border border-slate-700/80 rounded px-2 py-1 text-[11px] text-amber-200 placeholder-slate-500 focus:border-amber-400 focus:outline-none">
+            </div>
+            <div class="space-y-1 bg-slate-900/60 p-1.5 rounded border border-slate-800">
+              <input type="text" id="visitor2" placeholder="2. Visitor Name" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-amber-400 focus:outline-none">
+              <input type="text" id="visitorDisease2" placeholder="ಕಾಯಿಲೆ / Disease (if any)" class="w-full bg-slate-800/80 border border-slate-700/80 rounded px-2 py-1 text-[11px] text-amber-200 placeholder-slate-500 focus:border-amber-400 focus:outline-none">
+            </div>
+            <div class="space-y-1 bg-slate-900/60 p-1.5 rounded border border-slate-800">
+              <input type="text" id="visitor3" placeholder="3. Visitor Name" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-amber-400 focus:outline-none">
+              <input type="text" id="visitorDisease3" placeholder="ಕಾಯಿಲೆ / Disease (if any)" class="w-full bg-slate-800/80 border border-slate-700/80 rounded px-2 py-1 text-[11px] text-amber-200 placeholder-slate-500 focus:border-amber-400 focus:outline-none">
+            </div>
+            <div class="space-y-1 bg-slate-900/60 p-1.5 rounded border border-slate-800">
+              <input type="text" id="visitor4" placeholder="4. Visitor Name" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-amber-400 focus:outline-none">
+              <input type="text" id="visitorDisease4" placeholder="ಕಾಯಿಲೆ / Disease (if any)" class="w-full bg-slate-800/80 border border-slate-700/80 rounded px-2 py-1 text-[11px] text-amber-200 placeholder-slate-500 focus:border-amber-400 focus:outline-none">
+            </div>
+            <div class="space-y-1 bg-slate-900/60 p-1.5 rounded border border-slate-800">
+              <input type="text" id="visitor5" placeholder="5. Visitor Name" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-amber-400 focus:outline-none">
+              <input type="text" id="visitorDisease5" placeholder="ಕಾಯಿಲೆ / Disease (if any)" class="w-full bg-slate-800/80 border border-slate-700/80 rounded px-2 py-1 text-[11px] text-amber-200 placeholder-slate-500 focus:border-amber-400 focus:outline-none">
+            </div>
           </div>
         </div>
 
@@ -631,7 +652,7 @@
         
         <!-- Header -->
         <div class="flex justify-between items-start border-b-2 border-red-700 pb-2.5 mb-2.5 bg-white">
-          <div class="w-20 h-20 sm:w-24 sm:h-24 bg-white rounded-full p-1 border-2 border-red-600 shrink-0 logo-insert"></div>
+          <div class="w-20 h-20 sm:w-24 sm:h-24 bg-white rounded-full shrink-0 logo-insert"></div>
           <div class="text-center flex-1 px-2">
             <h1 class="cinzel text-lg sm:text-2xl font-black text-slate-900 tracking-wider">DGM-BETHEL CHURCH TRUST&reg;</h1>
             <p class="kannada font-bold text-xs sm:text-sm text-slate-800 mt-0.5">Form / ನಮೂನೆ</p>
@@ -706,7 +727,7 @@
         <!-- Additional Fields with Left Alignment -->
         <div class="space-y-1.5 text-black">
           <div class="border-b border-dotted border-slate-300 pb-1 text-left">
-            <strong>ಬಂದವರ ಹೆಸರು / Accompanying Visitors:</strong> <span id="pVisitors" class="font-medium ml-1 text-black"></span>
+            <strong>ಬಂದವರ ಹೆಸರು ಮತ್ತು ಕಾಯಿಲೆ / Accompanying Visitors & Disease:</strong> <span id="pVisitors" class="font-medium ml-1 text-black"></span>
           </div>
           <div class="border-b border-dotted border-slate-300 pb-1 text-left">
             <strong>ಚರ್ಚ್ ಬಗ್ಗೆ ಹೇಗೆ ತಿಳಿಯಿತು? / How did you know:</strong> <span id="pHowKnow" class="font-medium ml-1 text-black"></span>
@@ -765,6 +786,23 @@
       document.querySelectorAll(".logo-insert").forEach(el => {
         el.innerHTML = template;
       });
+    }
+
+    // Helper to collect all 5 visitors along with their respective diseases
+    function collectVisitorsFromForm() {
+      const list = [];
+      for (let i = 1; i <= 5; i++) {
+        const vName = document.getElementById(`visitor${i}`)?.value?.trim() || "";
+        const vDis = document.getElementById(`visitorDisease${i}`)?.value?.trim() || "";
+        if (vName && vDis) {
+          list.push(`${vName} (${vDis})`);
+        } else if (vName) {
+          list.push(vName);
+        } else if (vDis) {
+          list.push(`Visitor ${i} (${vDis})`);
+        }
+      }
+      return list;
     }
 
     // Universal Field Extractor (Handles any Google Sheet header case or alias)
@@ -854,7 +892,6 @@
       norm.declarationLang = getSheetField(rawRow, 'declarationLang') || findByPartialKey(["decl", "lang", "ಭಾಷೆ"]);
       norm.photo = getSheetField(rawRow, 'photo') || findByPartialKey(["photo", "img", "image", "pic"]);
 
-      // Fallback scan: if photo or declarationLang were stored in unnamed columns, detect them by value pattern
       if (!norm.photo) {
         const foundImg = nonEmptyValues.find(v => String(v).trim().startsWith("data:image/"));
         if (foundImg) norm.photo = String(foundImg).trim();
@@ -1219,7 +1256,24 @@
 
       for (let i = 1; i <= 5; i++) {
         const vInput = document.getElementById(`visitor${i}`);
-        if (vInput) vInput.value = visitorsArr[i - 1] || record[`visitor${i}`] || "";
+        const dInput = document.getElementById(`visitorDisease${i}`);
+        const rawEntry = visitorsArr[i - 1] || record[`visitor${i}`] || "";
+        const explicitDis = (Array.isArray(record.visitorDiseases) && record.visitorDiseases[i - 1]) || record[`visitorDisease${i}`] || "";
+
+        if (rawEntry) {
+          // If stored in "Name (Disease)" format, split into Name and Disease inputs
+          const match = String(rawEntry).match(/^(.*?)\s*\((.*)\)$/);
+          if (match && !explicitDis) {
+            if (vInput) vInput.value = match[1].trim();
+            if (dInput) dInput.value = match[2].trim();
+          } else {
+            if (vInput) vInput.value = rawEntry;
+            if (dInput) dInput.value = explicitDis;
+          }
+        } else {
+          if (vInput) vInput.value = "";
+          if (dInput) dInput.value = explicitDis;
+        }
       }
 
       const hk = getSheetField(record, 'howKnow');
@@ -1242,7 +1296,7 @@
       if (oi) document.getElementById("ownInterest").value = oi;
 
       const chosenLang = getSheetField(record, 'declarationLang').toLowerCase();
-      if (chosenLang === 'english') {
+      if (chosenLang.includes('eng')) {
         const engRadio = document.querySelector('input[name="declLang"][value="english"]');
         if (engRadio) engRadio.checked = true;
       } else {
@@ -1326,7 +1380,6 @@
             .map((r, idx) => normalizeSheetRow(r, idx))
             .filter(Boolean);
 
-          // Map local entries by ID AND by RegNo / Mobile+Name so photo and declarationLang are never lost
           const localById = new Map();
           const localByReg = new Map();
           const localByPerson = new Map();
@@ -1359,7 +1412,6 @@
                 if (!getSheetField(sheetRow, 'city') && cached.city) sheetRow.city = cached.city;
                 if (!getSheetField(sheetRow, 'district') && cached.district) sheetRow.district = cached.district;
                 if (!getSheetField(sheetRow, 'state') && cached.state) sheetRow.state = cached.state;
-                // Restore English/Kannada declaration language and Photo if Google Sheet didn't return them
                 if (!getSheetField(sheetRow, 'declarationLang') && cached.declarationLang) {
                   sheetRow.declarationLang = cached.declarationLang;
                 }
@@ -1428,11 +1480,7 @@
       const declRadio = document.querySelector('input[name="declLang"]:checked');
       const declLang = declRadio ? declRadio.value.toLowerCase().trim() : 'kannada';
 
-      const visitors = [];
-      for (let i = 1; i <= 5; i++) {
-        const v = document.getElementById(`visitor${i}`)?.value?.trim();
-        if (v) visitors.push(v);
-      }
+      const visitors = collectVisitorsFromForm();
 
       const cityClean = document.getElementById("cityInput").value.trim();
       const distClean = document.getElementById("districtInput").value.trim();
@@ -1578,13 +1626,13 @@
       document.getElementById("cameraContainer").classList.add("hidden");
     }
 
-    // Smart Image Compressor: Guarantees photo Base64 stays under Google Sheets' 50,000-character cell limit
+    // Smart Image Compressor: High clarity (450x540) while staying safely under Google Sheets' 50,000-char limit
     function compressImageDataUrl(dataUrl, callback) {
       const img = new Image();
       img.onload = function() {
         const canvas = document.createElement("canvas");
-        const maxW = 300;
-        const maxH = 360;
+        const maxW = 450;
+        const maxH = 540;
         let w = img.width;
         let h = img.height;
 
@@ -1599,9 +1647,11 @@
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, w, h);
 
-        let compressed = canvas.toDataURL("image/jpeg", 0.65);
-        if (compressed.length > 45000) {
-          compressed = canvas.toDataURL("image/jpeg", 0.45);
+        let quality = 0.75;
+        let compressed = canvas.toDataURL("image/jpeg", quality);
+        while (compressed.length > 47000 && quality > 0.35) {
+          quality -= 0.1;
+          compressed = canvas.toDataURL("image/jpeg", quality);
         }
         callback(compressed);
       };
@@ -1611,11 +1661,18 @@
     function takeSnapshot() {
       const video = document.getElementById("cameraVideo");
       const canvas = document.getElementById("cameraCanvas");
-      canvas.width = 300;
-      canvas.height = 360;
+      canvas.width = 450;
+      canvas.height = 540;
       const ctx = canvas.getContext("2d");
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      capturedPhotoBase64 = canvas.toDataURL("image/jpeg", 0.65);
+
+      let quality = 0.75;
+      let snapData = canvas.toDataURL("image/jpeg", quality);
+      while (snapData.length > 47000 && quality > 0.35) {
+        quality -= 0.1;
+        snapData = canvas.toDataURL("image/jpeg", quality);
+      }
+      capturedPhotoBase64 = snapData;
 
       setPhotoPreview(capturedPhotoBase64);
       stopCamera();
@@ -1654,7 +1711,14 @@
     function openImageZoom(imgSrc, personName) {
       if (!imgSrc) return;
       document.getElementById("enlargedZoomImg").src = imgSrc;
-      document.getElementById("zoomModalTitle").innerText = `Photo - ${personName || 'Record'}`;
+      const cleanName = personName && personName !== '-' ? personName : 'Visitor';
+      document.getElementById("zoomModalTitle").innerText = `Photo - ${cleanName}`;
+      
+      const dlBtn = document.getElementById("downloadZoomImgBtn");
+      if (dlBtn) {
+        dlBtn.href = imgSrc;
+        dlBtn.download = `DGM_Photo_${cleanName.replace(/\s+/g, '_')}.jpg`;
+      }
       document.getElementById("imageZoomModal").classList.remove("hidden");
     }
 
@@ -1972,13 +2036,7 @@
         state: stateVal,
         pincode: pinVal || "-",
         gender: document.getElementById("genderInput").value,
-        visitors: [
-          document.getElementById("visitor1").value,
-          document.getElementById("visitor2").value,
-          document.getElementById("visitor3").value,
-          document.getElementById("visitor4").value,
-          document.getElementById("visitor5").value
-        ].filter(v => v.trim() !== ""),
+        visitors: collectVisitorsFromForm(),
         howKnow: document.getElementById("howKnowInput").value.trim() || "-",
         purpose: document.getElementById("purposeInput").value.trim() || "-",
         hasDisease: document.getElementById("hasDisease").value,
