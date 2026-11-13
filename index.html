@@ -959,7 +959,8 @@
       let remaining = [];
       for (let entry of queue) {
         try {
-          const res = await fetch(SCRIPT_URL, {
+          const targetUrl = entry.action === "delete" ? `${SCRIPT_URL}?action=delete` : SCRIPT_URL;
+          const res = await fetch(targetUrl, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify(entry)
@@ -984,7 +985,7 @@
       if (icon) icon.classList.remove("fa-spin");
     }
 
-    // Delete Record Function (Deletes from Local Storage & Google Sheet)
+    // Delete Record Function (Deletes from Local Storage & Google Sheet without duplicating)
     async function deleteRecord(rec) {
       if (!rec) return;
       const nameStr = getSheetField(rec, 'name') || 'this visitor';
@@ -997,7 +998,7 @@
       const recId = rec.id || rec.ID || "";
       const recMobile = getSheetField(rec, 'mobile');
 
-      // Remove from active memory & local storage immediately
+      // 1. Remove from active memory & local storage immediately
       churchEntries = churchEntries.filter(item => {
         const itemId = item.id || item.ID || "";
         if (recId && itemId && !String(recId).startsWith("SHEET_ROW_")) {
@@ -1007,17 +1008,25 @@
       });
       localStorage.setItem("dgm_church_entries", JSON.stringify(churchEntries));
 
-      // Track deleted IDs locally so a cached sheet response doesn't resurrect it before Apps Script finishes
+      // 2. Also remove from offline queue if it was waiting to be synced
+      let queue = JSON.parse(localStorage.getItem("dgm_offline_queue") || "[]");
+      queue = queue.filter(q => q.id !== recId);
+      localStorage.setItem("dgm_offline_queue", JSON.stringify(queue));
+
+      // 3. Track deleted signature locally so cached sheet reads never bring it back
       let deletedList = JSON.parse(localStorage.getItem("dgm_deleted_ids") || "[]");
       const delSignature = `${recId}|${regStr}|${nameStr}|${recMobile}`;
-      deletedList.push(delSignature);
-      localStorage.setItem("dgm_deleted_ids", JSON.stringify(deletedList));
+      if (!deletedList.includes(delSignature)) {
+        deletedList.push(delSignature);
+        localStorage.setItem("dgm_deleted_ids", JSON.stringify(deletedList));
+      }
 
-      // Re-render search table immediately
+      // 4. Refresh search table UI immediately
       handleSearch();
 
       const deletePayload = {
         action: "delete",
+        isDelete: true,
         id: recId,
         regNo: regStr,
         name: nameStr,
@@ -1025,26 +1034,23 @@
       };
 
       try {
-        const res = await fetch(SCRIPT_URL, {
+        const res = await fetch(`${SCRIPT_URL}?action=delete`, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify(deletePayload)
         });
         const json = await res.json();
-        if (json.status === "success" || json.result === "success") {
-          // Successfully deleted on sheet; clear signature from temporary deleted tracker
-          let currentDel = JSON.parse(localStorage.getItem("dgm_deleted_ids") || "[]");
-          localStorage.setItem("dgm_deleted_ids", JSON.stringify(currentDel.filter(s => s !== delSignature)));
+        if (json.action === "deleted" || json.deleted === true) {
           await syncDataFromSheet();
           handleSearch();
         } else {
-          throw new Error(json.message || "Sheet delete failed");
+          console.warn("Note: Please deploy a 'New version' of Code.gs in Google Apps Script so sheet rows are deleted on the server.");
         }
       } catch (err) {
-        console.warn("Offline or error deleting from sheet; queued for deletion:", err);
-        let queue = JSON.parse(localStorage.getItem("dgm_offline_queue") || "[]");
-        queue.push(deletePayload);
-        localStorage.setItem("dgm_offline_queue", JSON.stringify(queue));
+        console.warn("Offline: Queued delete request for when internet returns:", err);
+        let currentQueue = JSON.parse(localStorage.getItem("dgm_offline_queue") || "[]");
+        currentQueue.push(deletePayload);
+        localStorage.setItem("dgm_offline_queue", JSON.stringify(currentQueue));
       }
     }
 
@@ -1377,7 +1383,7 @@
       }
     }
 
-    // Robust Fetch from Google Sheet with Local Photo & Language Preservation
+    // Robust Fetch from Google Sheet with Local Photo, Language, and Deleted-Record Filtering
     async function syncDataFromSheet() {
       const statusEl = document.getElementById("syncStatus");
       const dotEl = document.getElementById("syncStatusDot");
