@@ -787,7 +787,7 @@
     </div>
   </div>
 
-  <!-- ================= JAVASCRIPT LOGIC (PURE GOOGLE SHEET MODE) ================= -->
+  <!-- ================= JAVASCRIPT LOGIC ================= -->
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxTQkxZV2FN7ufWm9GYYbzuOrHMLGFOpJQIRI66LiHRzGMTO2zs-hs7PN3qYSCKbECWrg/exec";
 
@@ -801,15 +801,48 @@
     let pendingShareData = { title: "", text: "", url: "" };
 
     document.addEventListener("DOMContentLoaded", () => {
+      // Remove any old local cache so Search List strictly shows only Google Sheet records
       localStorage.removeItem("dgm_church_entries");
-      localStorage.removeItem("dgm_offline_queue");
       localStorage.removeItem("dgm_deleted_ids");
 
       refreshAllLogos();
       checkAuthLock();
       initTodaysDate();
-      syncDataFromSheet();
+      processOfflineQueue().then(() => syncDataFromSheet());
     });
+
+    // Automatically upload any waiting offline entries as soon as internet reconnects
+    window.addEventListener('online', async () => {
+      await processOfflineQueue();
+      await syncDataFromSheet();
+    });
+
+    async function processOfflineQueue() {
+      let queue = JSON.parse(localStorage.getItem("dgm_offline_queue") || "[]");
+      if (queue.length === 0) return;
+
+      const statusEl = document.getElementById("syncStatus");
+      if (statusEl) statusEl.innerText = `Uploading ${queue.length} queued offline record(s) to Google Sheet...`;
+
+      let remaining = [];
+      for (let item of queue) {
+        try {
+          const targetUrl = item.action === "delete" ? `${SCRIPT_URL}?action=delete` : SCRIPT_URL;
+          const res = await fetch(targetUrl, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(item)
+          });
+          const json = await res.json();
+          if (json.status !== "success" && json.result !== "success" && json.status !== "duplicate_error" && json.action !== "deleted") {
+            remaining.push(item);
+          }
+        } catch (e) {
+          remaining.push(item);
+        }
+      }
+      localStorage.setItem("dgm_offline_queue", JSON.stringify(remaining));
+    }
 
     function refreshAllLogos() {
       const template = document.getElementById("dgmLogoSvg").innerHTML;
@@ -976,7 +1009,7 @@
       return churchEntries.some(rec => {
         const recId = String(rec.id || rec.ID || "");
         if (isEditingMode && editingRecordId && recId === String(editingRecordId)) {
-          return false; // Allow keeping the same number when editing the same record
+          return false;
         }
         const existingFullReg = getFullRegNoFromRecord(rec).toLowerCase();
         return existingFullReg === targetFullReg;
@@ -986,6 +1019,7 @@
     async function forceManualSync() {
       const icon = document.getElementById("syncBtnIcon");
       if (icon) icon.classList.add("fa-spin");
+      await processOfflineQueue();
       await syncDataFromSheet();
       handleSearch();
       if (icon) icon.classList.remove("fa-spin");
@@ -1443,7 +1477,9 @@
             .map((r, idx) => normalizeSheetRow(r, idx))
             .filter(Boolean);
 
-          if (statusEl) statusEl.innerText = `Google Sheets Live Connected (${churchEntries.length} records)`;
+          const pendingQueue = JSON.parse(localStorage.getItem("dgm_offline_queue") || "[]");
+          const queueMsg = pendingQueue.length > 0 ? ` • ${pendingQueue.length} queued offline` : "";
+          if (statusEl) statusEl.innerText = `Google Sheets Live Connected (${churchEntries.length} records${queueMsg})`;
           if (dotEl) dotEl.className = "inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping";
         } else {
           churchEntries = [];
@@ -1451,8 +1487,9 @@
         }
       } catch (err) {
         console.error("Google Sheet Sync Error:", err);
-        churchEntries = [];
-        if (statusEl) statusEl.innerText = `Google Sheet Connection Error: ${err.message}`;
+        const pendingQueue = JSON.parse(localStorage.getItem("dgm_offline_queue") || "[]");
+        const queueMsg = pendingQueue.length > 0 ? ` (${pendingQueue.length} queued for auto-upload)` : "";
+        if (statusEl) statusEl.innerText = `Offline / Connection Notice: ${err.message}${queueMsg}`;
         if (dotEl) dotEl.className = "inline-block w-2 h-2 rounded-full bg-red-500";
       }
     }
@@ -1582,7 +1619,15 @@
         await syncDataFromSheet();
         closeNewEntryModal();
       } catch (err) {
-        alert("Failed to save to Google Sheet. Please check your internet connection and try again.");
+        // Hidden Offline Upload Queue: Queues the entry if internet drops so nothing is lost, while keeping Search List 100% Google Sheet only
+        let queue = JSON.parse(localStorage.getItem("dgm_offline_queue") || "[]");
+        queue.push(entry);
+        localStorage.setItem("dgm_offline_queue", JSON.stringify(queue));
+
+        alert(`No internet connection!\n\nRecord (${fullRegNo}) is safely queued in the background and will automatically upload to your Google Sheet as soon as internet reconnects.`);
+        isEditingMode = false;
+        editingRecordId = null;
+        closeNewEntryModal();
       } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = origText;
@@ -1741,6 +1786,7 @@
 
     async function openSearchModal() {
       document.getElementById("searchModal").classList.remove("hidden");
+      await processOfflineQueue();
       await syncDataFromSheet();
       handleSearch();
     }
