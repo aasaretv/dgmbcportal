@@ -602,7 +602,7 @@
       <!-- SEARCH DIRECTORY TABLE -->
       <div class="p-2 sm:p-3 overflow-y-auto flex-1">
         <div class="overflow-x-auto w-full">
-          <table class="w-full text-left text-xs text-slate-300 border-collapse min-w-[650px]">
+          <table class="w-full text-left text-xs text-slate-300 border-collapse min-w-[680px]">
             <thead>
               <tr class="border-b border-slate-700 text-amber-400 bg-slate-800/60">
                 <th class="p-2.5 text-center w-12">Photo</th>
@@ -984,6 +984,70 @@
       if (icon) icon.classList.remove("fa-spin");
     }
 
+    // Delete Record Function (Deletes from Local Storage & Google Sheet)
+    async function deleteRecord(rec) {
+      if (!rec) return;
+      const nameStr = getSheetField(rec, 'name') || 'this visitor';
+      const regStr = getFullRegNoFromRecord(rec);
+
+      if (!confirm(`Are you sure you want to permanently delete the record for "${nameStr}" (${regStr})?`)) {
+        return;
+      }
+
+      const recId = rec.id || rec.ID || "";
+      const recMobile = getSheetField(rec, 'mobile');
+
+      // Remove from active memory & local storage immediately
+      churchEntries = churchEntries.filter(item => {
+        const itemId = item.id || item.ID || "";
+        if (recId && itemId && !String(recId).startsWith("SHEET_ROW_")) {
+          return String(itemId) !== String(recId);
+        }
+        return !(getFullRegNoFromRecord(item) === regStr && getSheetField(item, 'name') === nameStr && getSheetField(item, 'mobile') === recMobile);
+      });
+      localStorage.setItem("dgm_church_entries", JSON.stringify(churchEntries));
+
+      // Track deleted IDs locally so a cached sheet response doesn't resurrect it before Apps Script finishes
+      let deletedList = JSON.parse(localStorage.getItem("dgm_deleted_ids") || "[]");
+      const delSignature = `${recId}|${regStr}|${nameStr}|${recMobile}`;
+      deletedList.push(delSignature);
+      localStorage.setItem("dgm_deleted_ids", JSON.stringify(deletedList));
+
+      // Re-render search table immediately
+      handleSearch();
+
+      const deletePayload = {
+        action: "delete",
+        id: recId,
+        regNo: regStr,
+        name: nameStr,
+        mobile: recMobile
+      };
+
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(deletePayload)
+        });
+        const json = await res.json();
+        if (json.status === "success" || json.result === "success") {
+          // Successfully deleted on sheet; clear signature from temporary deleted tracker
+          let currentDel = JSON.parse(localStorage.getItem("dgm_deleted_ids") || "[]");
+          localStorage.setItem("dgm_deleted_ids", JSON.stringify(currentDel.filter(s => s !== delSignature)));
+          await syncDataFromSheet();
+          handleSearch();
+        } else {
+          throw new Error(json.message || "Sheet delete failed");
+        }
+      } catch (err) {
+        console.warn("Offline or error deleting from sheet; queued for deletion:", err);
+        let queue = JSON.parse(localStorage.getItem("dgm_offline_queue") || "[]");
+        queue.push(deletePayload);
+        localStorage.setItem("dgm_offline_queue", JSON.stringify(queue));
+      }
+    }
+
     function checkAuthLock() {
       if (sessionStorage.getItem("dgm_auth_unlocked") === "true") {
         document.getElementById("lockScreenModal").classList.add("hidden");
@@ -1261,7 +1325,6 @@
         const explicitDis = (Array.isArray(record.visitorDiseases) && record.visitorDiseases[i - 1]) || record[`visitorDisease${i}`] || "";
 
         if (rawEntry) {
-          // If stored in "Name (Disease)" format, split into Name and Disease inputs
           const match = String(rawEntry).match(/^(.*?)\s*\((.*)\)$/);
           if (match && !explicitDis) {
             if (vInput) vInput.value = match[1].trim();
@@ -1376,9 +1439,19 @@
             incomingArray = converted;
           }
 
+          const deletedList = JSON.parse(localStorage.getItem("dgm_deleted_ids") || "[]");
+
           const normalizedSheetRows = incomingArray
             .map((r, idx) => normalizeSheetRow(r, idx))
-            .filter(Boolean);
+            .filter(Boolean)
+            .filter(r => {
+              const rId = r.id || r.ID || "";
+              const rReg = getFullRegNoFromRecord(r);
+              const rName = getSheetField(r, 'name');
+              const rMob = getSheetField(r, 'mobile');
+              const sig = `${rId}|${rReg}|${rName}|${rMob}`;
+              return !deletedList.includes(sig);
+            });
 
           const localById = new Map();
           const localByReg = new Map();
@@ -1427,7 +1500,7 @@
 
           const offlineQueue = JSON.parse(localStorage.getItem("dgm_offline_queue") || "[]");
           offlineQueue.forEach(qItem => {
-            if (qItem && !churchEntries.some(e => (e.id || e.ID) === qItem.id)) {
+            if (qItem && qItem.action !== "delete" && !churchEntries.some(e => (e.id || e.ID) === qItem.id)) {
               churchEntries.push(qItem);
             }
           });
@@ -1626,7 +1699,6 @@
       document.getElementById("cameraContainer").classList.add("hidden");
     }
 
-    // Smart Image Compressor: High clarity (450x540) while staying safely under Google Sheets' 50,000-char limit
     function compressImageDataUrl(dataUrl, callback) {
       const img = new Image();
       img.onload = function() {
@@ -1843,6 +1915,9 @@
             <button type="button" class="btn-share px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded text-[10px]" title="Share">
               <i class="fa-solid fa-share-nodes"></i>
             </button>
+            <button type="button" class="btn-delete px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white font-bold rounded text-[10px]" title="Delete Record">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
           </td>
         `;
 
@@ -1852,6 +1927,7 @@
         tr.querySelector('.btn-edit').addEventListener('click', () => editRecord(r));
         tr.querySelector('.btn-view').addEventListener('click', () => loadAndPreviewRecord(r));
         tr.querySelector('.btn-share').addEventListener('click', () => shareSingleRecord(r));
+        tr.querySelector('.btn-delete').addEventListener('click', () => deleteRecord(r));
 
         tbody.appendChild(tr);
       });
