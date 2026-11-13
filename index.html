@@ -35,14 +35,26 @@
       display: none;
     }
 
+    /* Proper A4 Page Proportions & Typography for Print & PDF */
+    .a4-sheet {
+      width: 100%;
+      max-width: 210mm;
+      margin: 0 auto;
+      background-color: #ffffff;
+      color: #000000;
+      font-size: 13px;
+      line-height: 1.42;
+      box-sizing: border-box;
+    }
+
     @page {
       size: A4 portrait;
-      margin: 6mm;
+      margin: 8mm;
     }
 
     @media print {
       html, body {
-        width: 100% !important;
+        width: 210mm !important;
         height: auto !important;
         margin: 0 !important;
         padding: 0 !important;
@@ -62,10 +74,13 @@
         display: block !important;
         position: static !important;
         width: 100% !important;
-        margin: 0 !important;
+        max-width: 194mm !important;
+        margin: 0 auto !important;
         padding: 2mm !important;
         background: #ffffff !important;
         color: #000000 !important;
+        font-size: 13px !important;
+        line-height: 1.42 !important;
         page-break-after: avoid !important;
         page-break-before: avoid !important;
         page-break-inside: avoid !important;
@@ -278,14 +293,15 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-850 p-2.5 rounded-lg border border-slate-800">
           <div class="space-y-1 w-full sm:w-auto">
             <label class="block font-medium text-slate-300 text-[11px]">Date / ದಿನಾಂಕ:</label>
-            <input type="date" id="entryDate" required onchange="updateRegNoPreview()" class="w-full sm:w-auto bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-slate-100 text-xs focus:border-amber-400 focus:outline-none">
+            <input type="date" id="entryDate" required onchange="handleDateChange()" class="w-full sm:w-auto bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-slate-100 text-xs focus:border-amber-400 focus:outline-none">
           </div>
           
-          <!-- MANUAL REGISTRATION NUMBER (1 to 800) -->
-          <div class="space-y-1 w-full sm:w-48">
+          <!-- MANUAL REGISTRATION NUMBER (1 to 800) WITH DUPLICATE CHECK -->
+          <div class="space-y-1 w-full sm:w-52">
             <label class="block font-medium text-amber-400 text-[11px]">Reg No. (1 to 800): <span class="text-red-400">*</span></label>
             <input type="number" id="manualSeqInput" min="1" max="800" required placeholder="Enter 1 - 800" oninput="handleRegSeqChange(this)"
               class="w-full bg-slate-800 border border-amber-500/60 rounded px-2.5 py-1.5 text-amber-300 font-mono font-bold text-xs focus:border-amber-400 focus:outline-none">
+            <p id="dupRegError" class="text-[10px] text-red-400 font-semibold hidden"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Already used on this date!</p>
           </div>
 
           <div class="text-left sm:text-right">
@@ -366,8 +382,8 @@
           </div>
         </div>
 
-        <!-- Name & Relative Name -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        <!-- Name, Relative Name & Occupation -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
           <div>
             <label class="block font-medium text-slate-300 mb-0.5">ಹೆಸರು / Full Name: <span class="text-red-400">*</span></label>
             <input type="text" id="nameInput" required placeholder="Full Name" class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-2 text-xs focus:border-amber-400 focus:outline-none">
@@ -375,6 +391,10 @@
           <div>
             <label class="block font-medium text-slate-300 mb-0.5">ತಂದೆ/ಗಂಡನ ಹೆಸರು / Father/Husband Name:</label>
             <input type="text" id="relativeNameInput" placeholder="Father / Husband Name" class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-2 text-xs focus:border-amber-400 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-medium text-slate-300 mb-0.5">ಉದ್ಯೋಗ / Occupation:</label>
+            <input type="text" id="occupationInput" placeholder="Occupation / Job" class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-2 text-xs focus:border-amber-400 focus:outline-none">
           </div>
         </div>
 
@@ -568,13 +588,13 @@
       <div class="bg-slate-800 px-3 sm:px-4 py-2.5 sm:py-3 border-b border-slate-700 flex justify-between items-center shrink-0">
         <div class="flex items-center space-x-2">
           <i class="fa-solid fa-magnifying-glass text-amber-400"></i>
-          <h3 class="text-xs sm:text-sm font-bold text-amber-400">Search Records / ದಾಖಲೆಗಳ ಹುಡುಕಾಟ</h3>
+          <h3 class="text-xs sm:text-sm font-bold text-amber-400">Google Sheet Saved Records / ದಾಖಲೆಗಳ ಹುಡುಕಾಟ</h3>
           <span id="searchCountBadge" class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full text-[10px] font-mono">0 records</span>
         </div>
         <div class="flex items-center space-x-2">
           <button onclick="forceManualSync()" id="manualSyncBtn" class="px-2.5 py-1 bg-amber-600/30 hover:bg-amber-600/50 text-amber-300 border border-amber-500/40 rounded text-xs flex items-center space-x-1 transition">
             <i class="fa-solid fa-rotate" id="syncBtnIcon"></i>
-            <span>Sync Sheet</span>
+            <span>Refresh Sheet</span>
           </button>
           <button onclick="shareDirectorySummary()" class="px-2.5 py-1 bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 rounded text-xs flex items-center space-x-1">
             <i class="fa-solid fa-share-nodes"></i>
@@ -588,7 +608,7 @@
 
       <div class="p-2.5 sm:p-3 bg-slate-850 border-b border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
         <div class="sm:col-span-2">
-          <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Search by Name, Mobile, Aadhaar, Reg No, Visitor, City, District..."
+          <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Search by Name, Mobile, Aadhaar, Reg No, Occupation, Visitor, City, District..."
             class="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-slate-100 focus:border-amber-400 focus:outline-none">
         </div>
         <div class="flex space-x-1">
@@ -617,7 +637,7 @@
             <tbody id="searchResultsTableBody"></tbody>
           </table>
         </div>
-        <div id="noSearchResults" class="text-center py-8 text-slate-400 text-xs hidden">No matching records found. Click "Sync Sheet" to reload from Google Sheets.</div>
+        <div id="noSearchResults" class="text-center py-8 text-slate-400 text-xs hidden">No matching records found in Google Sheet.</div>
       </div>
 
       <div class="p-2.5 bg-slate-800 border-t border-slate-700 flex justify-end">
@@ -626,12 +646,12 @@
     </div>
   </div>
 
-  <!-- ================= PRINT PREVIEW & PDF CONTAINER ================= -->
+  <!-- ================= PRINT PREVIEW & PDF CONTAINER (PROPER A4 ALIGNMENT) ================= -->
   <div id="printPreviewModal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-1 sm:p-4 hidden">
     <div class="bg-white text-black w-full max-w-4xl max-h-[98vh] rounded-xl flex flex-col shadow-2xl overflow-hidden">
       
       <div class="bg-slate-900 text-white px-3 sm:px-4 py-2 flex justify-between items-center no-print shrink-0">
-        <span class="text-xs font-bold text-amber-400"><i class="fa-solid fa-file-invoice mr-1.5"></i> Document View & Print (1 Page A4)</span>
+        <span class="text-xs font-bold text-amber-400"><i class="fa-solid fa-file-invoice mr-1.5"></i> A4 Document View & Print (1 Page)</span>
         <div class="flex items-center space-x-1.5">
           <button onclick="shareActiveRecord()" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded text-xs flex items-center space-x-1">
             <i class="fa-solid fa-share-nodes"></i>
@@ -647,97 +667,104 @@
         </div>
       </div>
 
-      <!-- Printable Sheet: Compacted to guarantee 1 single A4 page on Android & PDF -->
-      <div class="p-4 sm:p-6 overflow-y-auto flex-1 bg-white text-black text-[12.5px] leading-snug" id="printableArea" style="background-color: #ffffff; color: #000000;">
+      <!-- Printable Sheet: Exact A4 Typography & Balanced Grid Alignment -->
+      <div class="p-5 sm:p-8 overflow-y-auto flex-1 bg-white text-black a4-sheet" id="printableArea">
         
         <!-- Header -->
-        <div class="flex justify-between items-start border-b-2 border-red-700 pb-2.5 mb-2.5 bg-white">
-          <div class="w-20 h-20 sm:w-24 sm:h-24 bg-white rounded-full shrink-0 logo-insert"></div>
-          <div class="text-center flex-1 px-2">
-            <h1 class="cinzel text-lg sm:text-2xl font-black text-slate-900 tracking-wider">DGM-BETHEL CHURCH TRUST&reg;</h1>
-            <p class="kannada font-bold text-xs sm:text-sm text-slate-800 mt-0.5">Form / ನಮೂನೆ</p>
-            <p class="text-[10.5px] sm:text-[11.5px] text-slate-700 mt-0.5 leading-tight">Bethel Road, Yesupura, Innanje Railway Station Road, Innanje Village,</p>
-            <p class="text-[10.5px] sm:text-[11.5px] text-slate-700 leading-tight">Shankarpura Post-574115, Udupi Dist. Karnataka, India. Mobile: 0091-9902334941</p>
-            <p class="text-[10.5px] sm:text-[11.5px] text-red-700 font-semibold mt-0.5">www.dgmbethelchurch.org</p>
+        <div class="flex justify-between items-center border-b-2 border-red-700 pb-3 mb-3 bg-white">
+          <div class="w-24 h-24 bg-white rounded-full shrink-0 logo-insert"></div>
+          <div class="text-center flex-1 px-3">
+            <h1 class="cinzel text-xl sm:text-2xl font-black text-slate-900 tracking-wider leading-tight">DGM-BETHEL CHURCH TRUST&reg;</h1>
+            <p class="kannada font-bold text-sm text-slate-800 mt-0.5">Form / ನಮೂನೆ</p>
+            <p class="text-[11.5px] text-slate-800 mt-1 leading-snug">Bethel Road, Yesupura, Innanje Railway Station Road, Innanje Village,</p>
+            <p class="text-[11.5px] text-slate-800 leading-snug">Shankarpura Post-574115, Udupi Dist. Karnataka, India. Mobile: 0091-9902334941</p>
+            <p class="text-[11.5px] text-red-700 font-bold mt-0.5">www.dgmbethelchurch.org</p>
           </div>
           <!-- Clickable Photo Box in View / Print -->
-          <div id="printPhotoContainer" class="w-20 h-24 border border-slate-400 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0 transition" title="Click to view/enlarge photo">
+          <div id="printPhotoContainer" class="w-24 h-28 border border-slate-500 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0 transition" title="Click to view/enlarge photo">
             <span class="text-[11px] text-slate-400 font-medium">Photo</span>
           </div>
         </div>
 
         <!-- Banner: Reg No & Date -->
-        <div class="flex justify-between items-center bg-slate-100 px-3 py-1.5 rounded border border-slate-300 font-bold mb-2.5 text-[13px]">
-          <span id="printRegNoText" class="font-mono text-red-700 text-sm sm:text-base font-bold text-left">Reg No: -</span>
-          <span id="printDateText" class="font-mono text-slate-900 text-sm sm:text-base font-bold text-right">Date: -</span>
+        <div class="flex justify-between items-center bg-slate-100 px-3.5 py-2 rounded border border-slate-400 font-bold mb-3 text-[13.5px]">
+          <span id="printRegNoText" class="font-mono text-red-700 text-[15px] font-bold text-left">Reg No: -</span>
+          <span id="printDateText" class="font-mono text-slate-900 text-[15px] font-bold text-right">Date: -</span>
         </div>
 
-        <!-- BOX FORMAT: Personal Details with City, District, State -->
-        <div class="border border-slate-400 rounded mb-2.5 bg-white text-black">
-          <div class="grid grid-cols-2 border-b border-slate-300">
-            <div class="p-2 border-r border-slate-300 text-left">
+        <!-- BOX FORMAT: Personal Details with Occupation, City, District, State -->
+        <div class="border border-slate-500 rounded mb-3 bg-white text-black text-[13px]">
+          <!-- Row 1: Name & Relative Name -->
+          <div class="grid grid-cols-2 border-b border-slate-400">
+            <div class="p-2.5 border-r border-slate-400 text-left">
               <strong>ಹೆಸರು / Full Name:</strong> <span id="pName" class="font-semibold ml-1 text-black"></span>
             </div>
-            <div class="p-2 text-left">
+            <div class="p-2.5 text-left">
               <strong>ತಂದೆ/ಗಂಡನ ಹೆಸರು / Relative:</strong> <span id="pRelative" class="font-medium ml-1 text-black"></span>
             </div>
           </div>
 
-          <div class="grid grid-cols-2 border-b border-slate-300 bg-amber-50/40">
-            <div class="p-2 border-r border-slate-300 text-left">
+          <!-- Row 2: Gender, DOB & Occupation -->
+          <div class="grid grid-cols-3 border-b border-slate-400">
+            <div class="p-2.5 border-r border-slate-400 text-left">
+              <strong>ಲಿಂಗ / Gender:</strong> <span id="pGender" class="font-medium ml-1 text-black"></span>
+            </div>
+            <div class="p-2.5 border-r border-slate-400 text-left">
+              <strong>ಹುಟ್ಟಿದ ದಿನಾಂಕ / DOB:</strong> <span id="pDob" class="font-mono font-medium ml-1 text-black"></span>
+            </div>
+            <div class="p-2.5 text-left">
+              <strong>ಉದ್ಯೋಗ / Occupation:</strong> <span id="pOccupation" class="font-medium ml-1 text-black"></span>
+            </div>
+          </div>
+
+          <!-- Row 3: Aadhaar & Mobile -->
+          <div class="grid grid-cols-2 border-b border-slate-400 bg-amber-50/40">
+            <div class="p-2.5 border-r border-slate-400 text-left">
               <strong>ಆಧಾರ್ ಸಂಖ್ಯೆ / Aadhaar No:</strong> <span id="pAadhaar" class="font-mono font-semibold ml-1 text-black"></span>
             </div>
-            <div class="p-2 text-left">
+            <div class="p-2.5 text-left">
               <strong>ಮೊಬೈಲ್ ಸಂಖ್ಯೆ / Mobile No:</strong> <span id="pMobile" class="font-mono font-semibold ml-1 text-black"></span>
             </div>
           </div>
 
-          <div class="grid grid-cols-3 border-b border-slate-300">
-            <div class="col-span-2 p-2 border-r border-slate-300 text-left">
+          <!-- Row 4: Full Address & Pin Code -->
+          <div class="grid grid-cols-3 border-b border-slate-400">
+            <div class="col-span-2 p-2.5 border-r border-slate-400 text-left">
               <strong>ಸಂಪೂರ್ಣ ವಿಳಾಸ / Full Address:</strong> <span id="pAddress" class="font-medium ml-1 text-black"></span>
             </div>
-            <div class="p-2 text-left">
+            <div class="p-2.5 text-left">
               <strong>ಪಿನ್ ಕೋಡ್ / Pin Code:</strong> <span id="pPincode" class="font-mono font-semibold ml-1 text-black"></span>
             </div>
           </div>
 
-          <!-- City, District, State in aligned 3-column row -->
-          <div class="grid grid-cols-3 border-b border-slate-300 bg-slate-50">
-            <div class="p-2 border-r border-slate-300 text-left">
+          <!-- Row 5: City, District, State -->
+          <div class="grid grid-cols-3 bg-slate-50">
+            <div class="p-2.5 border-r border-slate-400 text-left">
               <strong>ಊರು/ನಗರ / City:</strong> <span id="pCity" class="font-semibold ml-1 text-black"></span>
             </div>
-            <div class="p-2 border-r border-slate-300 text-left">
+            <div class="p-2.5 border-r border-slate-400 text-left">
               <strong>ಜಿಲ್ಲೆ / District:</strong> <span id="pDistrict" class="font-semibold ml-1 text-black"></span>
             </div>
-            <div class="p-2 text-left">
+            <div class="p-2.5 text-left">
               <strong>ರಾಜ್ಯ / State:</strong> <span id="pState" class="font-semibold ml-1 text-black"></span>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2">
-            <div class="p-2 border-r border-slate-300 text-left">
-              <strong>ಲಿಂಗ / Gender:</strong> <span id="pGender" class="font-medium ml-1 text-black"></span>
-            </div>
-            <div class="p-2 text-left">
-              <strong>ಹುಟ್ಟಿದ ದಿನಾಂಕ / Date of Birth:</strong> <span id="pDob" class="font-mono font-medium ml-1 text-black"></span>
             </div>
           </div>
         </div>
 
         <!-- Additional Fields with Left Alignment -->
-        <div class="space-y-1.5 text-black">
-          <div class="border-b border-dotted border-slate-300 pb-1 text-left">
+        <div class="space-y-2 text-black text-[13px]">
+          <div class="border-b border-dotted border-slate-400 pb-1.5 text-left">
             <strong>ಬಂದವರ ಹೆಸರು ಮತ್ತು ಕಾಯಿಲೆ / Accompanying Visitors & Disease:</strong> <span id="pVisitors" class="font-medium ml-1 text-black"></span>
           </div>
-          <div class="border-b border-dotted border-slate-300 pb-1 text-left">
+          <div class="border-b border-dotted border-slate-400 pb-1.5 text-left">
             <strong>ಚರ್ಚ್ ಬಗ್ಗೆ ಹೇಗೆ ತಿಳಿಯಿತು? / How did you know:</strong> <span id="pHowKnow" class="font-medium ml-1 text-black"></span>
           </div>
-          <div class="border-b border-dotted border-slate-300 pb-1 text-left">
+          <div class="border-b border-dotted border-slate-400 pb-1.5 text-left">
             <strong>ಬರುವ ಉದ್ದೇಶ / Purpose of visit:</strong> <span id="pPurpose" class="font-medium ml-1 text-black"></span>
           </div>
 
           <!-- Health & Faith Questions -->
-          <div class="bg-slate-50 p-2.5 rounded border border-slate-300 space-y-1 text-[12px] leading-snug text-left text-black">
+          <div class="bg-slate-50 p-3 rounded border border-slate-400 space-y-1 text-[12.5px] leading-snug text-left text-black">
             <p><strong>1. ಕಾಯಿಲೆ ಇದೆಯಾ? / Any disease:</strong> <span id="pDisease" class="font-medium ml-1 text-black"></span></p>
             <p><strong>2. ಚಿಕಿತ್ಸೆ ಪಡೆಯುತ್ತಿದ್ದೀರಾ? / Treatment:</strong> <span id="pTreatment" class="font-medium ml-1 text-black"></span></p>
             <p><strong>3. ಸುಧಾರಣೆ ಆಗಿದೆಯಾ? / Improvement:</strong> <span id="pImprovement" class="font-medium ml-1 text-black"></span></p>
@@ -746,10 +773,10 @@
           </div>
 
           <!-- Dynamic Self Declaration Container -->
-          <div id="printDeclarationBox" class="p-2.5 rounded border border-slate-300 mt-1.5 text-[11.5px] leading-snug text-justify text-black"></div>
+          <div id="printDeclarationBox" class="p-3 rounded border border-slate-400 mt-2 text-[12px] leading-relaxed text-justify text-black"></div>
 
           <!-- Signatures Section -->
-          <div class="flex justify-between items-end pt-10 pb-1 text-[12.5px] font-bold text-slate-900">
+          <div class="flex justify-between items-end pt-12 pb-1 text-[13px] font-bold text-slate-900">
             <div class="text-left">ಹೆಸರು / Name</div>
             <div class="text-center">ಸಹಿ / Signature</div>
             <div class="text-right">ಎಡಗೈ ಹೆಬ್ಬೆಟ್ಟು / L. Thumb</div>
@@ -760,7 +787,7 @@
     </div>
   </div>
 
-  <!-- ================= JAVASCRIPT LOGIC ================= -->
+  <!-- ================= JAVASCRIPT LOGIC (PURE GOOGLE SHEET MODE) ================= -->
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxTQkxZV2FN7ufWm9GYYbzuOrHMLGFOpJQIRI66LiHRzGMTO2zs-hs7PN3qYSCKbECWrg/exec";
 
@@ -774,11 +801,14 @@
     let pendingShareData = { title: "", text: "", url: "" };
 
     document.addEventListener("DOMContentLoaded", () => {
+      localStorage.removeItem("dgm_church_entries");
+      localStorage.removeItem("dgm_offline_queue");
+      localStorage.removeItem("dgm_deleted_ids");
+
       refreshAllLogos();
       checkAuthLock();
       initTodaysDate();
       syncDataFromSheet();
-      setupNetworkListeners();
     });
 
     function refreshAllLogos() {
@@ -805,12 +835,13 @@
       return list;
     }
 
-    // Universal Field Extractor (Handles any Google Sheet header case or alias)
+    // Universal Field Extractor
     function getSheetField(rec, type) {
       if (!rec || typeof rec !== "object") return "";
       const keyMap = {
         name: ["name", "Name", "NAME", "Full Name", "full name", "visitor_name", "ಹೆಸರು"],
         relativeName: ["relativeName", "RelativeName", "Relative", "relative", "Father/Husband Name", "father_name"],
+        occupation: ["occupation", "Occupation", "OCCUPATION", "job", "Job", "profession", "ಉದ್ಯೋಗ"],
         address: ["address", "Address", "ADDRESS", "Full Address", "full address"],
         regNo: ["regNo", "Reg No.", "Reg No", "RegNo", "reg_no", "Registration Number", "Registration No", "Reg. No."],
         city: ["city", "City", "CITY", "place", "Place", "town", "Town", "village", "Village", "taluk", "Taluk", "ಊರು", "ನಗರ"],
@@ -851,14 +882,12 @@
       return "";
     }
 
-    // Universal Row Normalizer: Maps any Google Sheet row object or array by header name OR column position
     function normalizeSheetRow(rawRow, index) {
       if (!rawRow || typeof rawRow !== "object") return null;
 
       const keys = Object.keys(rawRow);
       const values = Object.values(rawRow);
 
-      // Skip completely blank rows
       const nonEmptyValues = values.filter(v => v !== "" && v !== null && v !== undefined);
       if (nonEmptyValues.length === 0) return null;
 
@@ -884,6 +913,7 @@
       norm.aadhaar = getSheetField(rawRow, 'aadhaar') || findByPartialKey(["aadhaar", "aadhar", "ಆಧಾರ್", "uid"]);
       norm.regNo = getSheetField(rawRow, 'regNo') || findByPartialKey(["reg", "registration", "serial", "sl"]);
       norm.relativeName = getSheetField(rawRow, 'relativeName') || findByPartialKey(["relative", "father", "husband", "ತಂದೆ", "ಗಂಡ"]);
+      norm.occupation = getSheetField(rawRow, 'occupation') || findByPartialKey(["occupation", "job", "profession", "ಉದ್ಯೋಗ"]);
       norm.address = getSheetField(rawRow, 'address') || findByPartialKey(["address", "street", "ವಿಳಾಸ"]);
       norm.city = getSheetField(rawRow, 'city') || findByPartialKey(["city", "place", "town", "village", "taluk", "ಊರು", "ನಗರ"]);
       norm.district = getSheetField(rawRow, 'district') || findByPartialKey(["district", "dist", "ಜಿಲ್ಲೆ"]);
@@ -938,91 +968,41 @@
       return buildRegistrationNumber(extractRecordDate(rec), seqField || "");
     }
 
-    function setupNetworkListeners() {
-      window.addEventListener('online', async () => {
-        document.getElementById("syncStatus").innerText = "Back online! Syncing offline entries...";
-        document.getElementById("syncStatusDot").className = "inline-block w-2 h-2 rounded-full bg-amber-400 animate-ping";
-        await processOfflineQueue();
-        await syncDataFromSheet();
-      });
+    // Check if a Registration Number (dgmbc/dd/mm/yyyy/No) is already used on the same date
+    function isRegNumberDuplicateForDate(dateStr, seqNum) {
+      if (!seqNum || isNaN(seqNum)) return false;
+      const targetFullReg = buildRegistrationNumber(dateStr, seqNum).toLowerCase();
 
-      window.addEventListener('offline', () => {
-        document.getElementById("syncStatus").innerText = "Offline Mode (Changes will auto-sync when connected)";
-        document.getElementById("syncStatusDot").className = "inline-block w-2 h-2 rounded-full bg-red-400";
-      });
-    }
-
-    async function processOfflineQueue() {
-      let queue = JSON.parse(localStorage.getItem("dgm_offline_queue") || "[]");
-      if (queue.length === 0) return;
-
-      let remaining = [];
-      for (let entry of queue) {
-        try {
-          const targetUrl = entry.action === "delete" ? `${SCRIPT_URL}?action=delete` : SCRIPT_URL;
-          const res = await fetch(targetUrl, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(entry)
-          });
-          const json = await res.json();
-          if (json.status !== "success" && json.result !== "success") {
-            remaining.push(entry);
-          }
-        } catch (err) {
-          remaining.push(entry);
+      return churchEntries.some(rec => {
+        const recId = String(rec.id || rec.ID || "");
+        if (isEditingMode && editingRecordId && recId === String(editingRecordId)) {
+          return false; // Allow keeping the same number when editing the same record
         }
-      }
-      localStorage.setItem("dgm_offline_queue", JSON.stringify(remaining));
+        const existingFullReg = getFullRegNoFromRecord(rec).toLowerCase();
+        return existingFullReg === targetFullReg;
+      });
     }
 
     async function forceManualSync() {
       const icon = document.getElementById("syncBtnIcon");
       if (icon) icon.classList.add("fa-spin");
-      await processOfflineQueue();
       await syncDataFromSheet();
       handleSearch();
       if (icon) icon.classList.remove("fa-spin");
     }
 
-    // Delete Record Function (Deletes from Local Storage & Google Sheet without duplicating)
+    // Delete Record Function (Deletes directly from Google Sheet and reloads Sheet data)
     async function deleteRecord(rec) {
       if (!rec) return;
       const nameStr = getSheetField(rec, 'name') || 'this visitor';
       const regStr = getFullRegNoFromRecord(rec);
 
-      if (!confirm(`Are you sure you want to permanently delete the record for "${nameStr}" (${regStr})?`)) {
+      if (!confirm(`Are you sure you want to permanently delete the record for "${nameStr}" (${regStr}) from Google Sheets?`)) {
         return;
       }
 
       const recId = rec.id || rec.ID || "";
       const recMobile = getSheetField(rec, 'mobile');
-
-      // 1. Remove from active memory & local storage immediately
-      churchEntries = churchEntries.filter(item => {
-        const itemId = item.id || item.ID || "";
-        if (recId && itemId && !String(recId).startsWith("SHEET_ROW_")) {
-          return String(itemId) !== String(recId);
-        }
-        return !(getFullRegNoFromRecord(item) === regStr && getSheetField(item, 'name') === nameStr && getSheetField(item, 'mobile') === recMobile);
-      });
-      localStorage.setItem("dgm_church_entries", JSON.stringify(churchEntries));
-
-      // 2. Also remove from offline queue if it was waiting to be synced
-      let queue = JSON.parse(localStorage.getItem("dgm_offline_queue") || "[]");
-      queue = queue.filter(q => q.id !== recId);
-      localStorage.setItem("dgm_offline_queue", JSON.stringify(queue));
-
-      // 3. Track deleted signature locally so cached sheet reads never bring it back
-      let deletedList = JSON.parse(localStorage.getItem("dgm_deleted_ids") || "[]");
-      const delSignature = `${recId}|${regStr}|${nameStr}|${recMobile}`;
-      if (!deletedList.includes(delSignature)) {
-        deletedList.push(delSignature);
-        localStorage.setItem("dgm_deleted_ids", JSON.stringify(deletedList));
-      }
-
-      // 4. Refresh search table UI immediately
-      handleSearch();
 
       const deletePayload = {
         action: "delete",
@@ -1034,23 +1014,21 @@
       };
 
       try {
+        document.getElementById("syncStatus").innerText = "Deleting record from Google Sheet...";
         const res = await fetch(`${SCRIPT_URL}?action=delete`, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify(deletePayload)
         });
         const json = await res.json();
-        if (json.action === "deleted" || json.deleted === true) {
+        if (json.action === "deleted" || json.deleted === true || json.status === "success") {
           await syncDataFromSheet();
           handleSearch();
         } else {
-          console.warn("Note: Please deploy a 'New version' of Code.gs in Google Apps Script so sheet rows are deleted on the server.");
+          alert("Could not delete from Google Sheet. Please make sure you deployed the latest Code.gs as a 'New version'.");
         }
       } catch (err) {
-        console.warn("Offline: Queued delete request for when internet returns:", err);
-        let currentQueue = JSON.parse(localStorage.getItem("dgm_offline_queue") || "[]");
-        currentQueue.push(deletePayload);
-        localStorage.setItem("dgm_offline_queue", JSON.stringify(currentQueue));
+        alert("Failed to connect to Google Sheet to delete record. Please check your internet connection.");
       }
     }
 
@@ -1117,6 +1095,13 @@
       updateRegNoPreview();
     }
 
+    function handleDateChange() {
+      if (!isEditingMode) {
+        document.getElementById("manualSeqInput").value = getNextDefaultSeq();
+      }
+      updateRegNoPreview();
+    }
+
     function handleRegSeqChange(inputEl) {
       let val = inputEl.value.replace(/[^0-9]/g, '');
       if (val !== "") {
@@ -1131,7 +1116,22 @@
     function updateRegNoPreview() {
       const dt = document.getElementById("entryDate").value;
       const manualVal = document.getElementById("manualSeqInput")?.value?.trim() || "";
-      document.getElementById("displayRegId").innerText = buildRegistrationNumber(dt, manualVal);
+      const fullPreview = buildRegistrationNumber(dt, manualVal);
+      const displayEl = document.getElementById("displayRegId");
+      const dupErrEl = document.getElementById("dupRegError");
+      const seqInputEl = document.getElementById("manualSeqInput");
+
+      displayEl.innerText = fullPreview;
+
+      if (manualVal && isRegNumberDuplicateForDate(dt, manualVal)) {
+        if (dupErrEl) dupErrEl.classList.remove("hidden");
+        if (seqInputEl) seqInputEl.classList.add("border-red-500", "text-red-400");
+        displayEl.className = "font-mono text-xs font-bold text-red-400 line-through";
+      } else {
+        if (dupErrEl) dupErrEl.classList.add("hidden");
+        if (seqInputEl) seqInputEl.classList.remove("border-red-500", "text-red-400");
+        displayEl.className = "font-mono text-xs font-bold text-amber-400";
+      }
     }
 
     function buildRegistrationNumber(dateStr, explicitSeq = null) {
@@ -1267,7 +1267,7 @@
         isEditingMode = false;
         editingRecordId = null;
 
-        feedback.innerText = `✓ Found ${matches.length} previous visit(s) for "${getSheetField(latestMatch, 'name')}". Details auto-filled! Saving will create a NEW record.`;
+        feedback.innerText = `✓ Found ${matches.length} previous visit(s) in Google Sheet for "${getSheetField(latestMatch, 'name')}". Details auto-filled! Saving will create a NEW record.`;
         feedback.classList.remove("hidden");
         populateFormFields(latestMatch, false);
       } else {
@@ -1278,6 +1278,7 @@
     function populateFormFields(record, isEdit = false) {
       const nameVal = getSheetField(record, 'name');
       const relVal = getSheetField(record, 'relativeName');
+      const occVal = getSheetField(record, 'occupation');
       const addrVal = getSheetField(record, 'address');
       const pinVal = getSheetField(record, 'pincode');
       const cityVal = getSheetField(record, 'city');
@@ -1286,6 +1287,7 @@
 
       if (nameVal) document.getElementById("nameInput").value = nameVal;
       if (relVal) document.getElementById("relativeNameInput").value = relVal;
+      if (occVal) document.getElementById("occupationInput").value = occVal;
       if (addrVal) document.getElementById("addressInput").value = addrVal;
       if (pinVal) document.getElementById("pincodeInput").value = pinVal;
       if (cityVal) document.getElementById("cityInput").value = cityVal;
@@ -1383,23 +1385,15 @@
       }
     }
 
-    // Robust Fetch from Google Sheet with Local Photo, Language, and Deleted-Record Filtering
+    // STRICT GOOGLE SHEET FETCH: Shows ONLY records saved in Google Sheets
     async function syncDataFromSheet() {
       const statusEl = document.getElementById("syncStatus");
       const dotEl = document.getElementById("syncStatusDot");
 
-      const local = localStorage.getItem("dgm_church_entries");
-      let localEntries = [];
       try {
-        localEntries = local ? JSON.parse(local) : [];
-      } catch (e) {
-        localEntries = [];
-      }
+        if (statusEl) statusEl.innerText = "Fetching live records from Google Sheets...";
 
-      try {
-        if (statusEl) statusEl.innerText = "Syncing records from Google Sheets...";
-
-        const res = await fetch(SCRIPT_URL, {
+        const res = await fetch(`${SCRIPT_URL}?t=${Date.now()}`, {
           method: "GET",
           redirect: "follow"
         });
@@ -1445,95 +1439,42 @@
             incomingArray = converted;
           }
 
-          const deletedList = JSON.parse(localStorage.getItem("dgm_deleted_ids") || "[]");
-
-          const normalizedSheetRows = incomingArray
+          churchEntries = incomingArray
             .map((r, idx) => normalizeSheetRow(r, idx))
-            .filter(Boolean)
-            .filter(r => {
-              const rId = r.id || r.ID || "";
-              const rReg = getFullRegNoFromRecord(r);
-              const rName = getSheetField(r, 'name');
-              const rMob = getSheetField(r, 'mobile');
-              const sig = `${rId}|${rReg}|${rName}|${rMob}`;
-              return !deletedList.includes(sig);
-            });
+            .filter(Boolean);
 
-          const localById = new Map();
-          const localByReg = new Map();
-          const localByPerson = new Map();
-
-          localEntries.forEach(item => {
-            if (!item) return;
-            if (item.id) localById.set(String(item.id), item);
-            const rNo = getFullRegNoFromRecord(item);
-            if (rNo && rNo !== "-") localByReg.set(rNo.toLowerCase(), item);
-            const pKey = `${getSheetField(item, 'name').toLowerCase()}_${getSheetField(item, 'mobile')}`;
-            if (pKey !== "_") localByPerson.set(pKey, item);
-          });
-
-          if (normalizedSheetRows.length > 0) {
-            churchEntries = normalizedSheetRows.map(sheetRow => {
-              const rowId = sheetRow.id || sheetRow.ID;
-              const sReg = getFullRegNoFromRecord(sheetRow);
-              const pKey = `${getSheetField(sheetRow, 'name').toLowerCase()}_${getSheetField(sheetRow, 'mobile')}`;
-
-              const cached = (rowId && localById.get(String(rowId)))
-                || (sReg && localByReg.get(sReg.toLowerCase()))
-                || localByPerson.get(pKey);
-
-              if (cached) {
-                if (!sheetRow.regNo || String(sheetRow.regNo).endsWith('/')) {
-                  sheetRow.regNo = cached.regNo;
-                  sheetRow["Reg No."] = cached.regNo;
-                  sheetRow.regSeq = cached.regSeq;
-                }
-                if (!getSheetField(sheetRow, 'city') && cached.city) sheetRow.city = cached.city;
-                if (!getSheetField(sheetRow, 'district') && cached.district) sheetRow.district = cached.district;
-                if (!getSheetField(sheetRow, 'state') && cached.state) sheetRow.state = cached.state;
-                if (!getSheetField(sheetRow, 'declarationLang') && cached.declarationLang) {
-                  sheetRow.declarationLang = cached.declarationLang;
-                }
-                if (!getSheetField(sheetRow, 'photo') && cached.photo) {
-                  sheetRow.photo = cached.photo;
-                }
-              }
-              return sheetRow;
-            });
-          } else {
-            churchEntries = localEntries;
-          }
-
-          const offlineQueue = JSON.parse(localStorage.getItem("dgm_offline_queue") || "[]");
-          offlineQueue.forEach(qItem => {
-            if (qItem && qItem.action !== "delete" && !churchEntries.some(e => (e.id || e.ID) === qItem.id)) {
-              churchEntries.push(qItem);
-            }
-          });
-
-          localStorage.setItem("dgm_church_entries", JSON.stringify(churchEntries));
-
-          if (statusEl) statusEl.innerText = `Google Sheets Connected (${churchEntries.length} records loaded)`;
+          if (statusEl) statusEl.innerText = `Google Sheets Live Connected (${churchEntries.length} records)`;
           if (dotEl) dotEl.className = "inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping";
         } else {
+          churchEntries = [];
           throw new Error(json.message || "Sheet returned empty or unknown format");
         }
       } catch (err) {
         console.error("Google Sheet Sync Error:", err);
-        churchEntries = localEntries;
-        if (statusEl) statusEl.innerText = `Sync Notice: ${err.message} (${churchEntries.length} local records)`;
-        if (dotEl) dotEl.className = "inline-block w-2 h-2 rounded-full bg-amber-400";
+        churchEntries = [];
+        if (statusEl) statusEl.innerText = `Google Sheet Connection Error: ${err.message}`;
+        if (dotEl) dotEl.className = "inline-block w-2 h-2 rounded-full bg-red-500";
       }
     }
 
     async function handleFormSubmit(e) {
       e.preventDefault();
+      const dt = document.getElementById("entryDate").value;
       const mobileVal = document.getElementById("mobileInput").value.trim();
       const aadhaarVal = document.getElementById("aadhaarInput").value.trim();
       const manualSeqVal = document.getElementById("manualSeqInput").value.trim();
 
       if (!manualSeqVal || isNaN(manualSeqVal) || parseInt(manualSeqVal, 10) < 1 || parseInt(manualSeqVal, 10) > 800) {
         alert("Please enter a valid Registration Number between 1 and 800.");
+        document.getElementById("manualSeqInput").focus();
+        return;
+      }
+
+      const fullRegNo = buildRegistrationNumber(dt, manualSeqVal);
+
+      // Block duplicate Reg No for the same date
+      if (isRegNumberDuplicateForDate(dt, manualSeqVal)) {
+        alert(`Duplicate Registration Number!\n\n"${fullRegNo}" is already registered for this date (${parseDateToDDMMYYYY(dt)}).\nPlease enter a different Registration Number.`);
         document.getElementById("manualSeqInput").focus();
         return;
       }
@@ -1550,12 +1491,9 @@
       const submitBtn = document.getElementById("submitFormBtn");
       const origText = submitBtn.innerHTML;
       submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Saving...';
+      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Saving to Sheet...';
 
-      const dt = document.getElementById("entryDate").value;
       const dobVal = document.getElementById("dobInput").value;
-      const fullRegNo = buildRegistrationNumber(dt, manualSeqVal);
-      
       const declRadio = document.querySelector('input[name="declLang"]:checked');
       const declLang = declRadio ? declRadio.value.toLowerCase().trim() : 'kannada';
 
@@ -1565,6 +1503,7 @@
       const distClean = document.getElementById("districtInput").value.trim();
       const stateClean = document.getElementById("stateInput").value.trim() || "Karnataka";
       const pinClean = document.getElementById("pincodeInput").value.trim();
+      const occClean = document.getElementById("occupationInput").value.trim();
       const formattedEntryDate = parseDateToDDMMYYYY(dt);
 
       const recordUniqueId = (isEditingMode && editingRecordId)
@@ -1590,6 +1529,8 @@
         mobile: mobileVal,
         name: document.getElementById("nameInput").value.trim(),
         relativeName: document.getElementById("relativeNameInput").value.trim(),
+        occupation: occClean,
+        Occupation: occClean,
         address: document.getElementById("addressInput").value.trim(),
         city: cityClean,
         City: cityClean,
@@ -1619,15 +1560,6 @@
         Photo: capturedPhotoBase64 || ""
       };
 
-      if (isEditingMode && editingRecordId) {
-        const idx = churchEntries.findIndex(r => (r.id || r.ID) === entry.id);
-        if (idx >= 0) churchEntries[idx] = entry;
-        else churchEntries.push(entry);
-      } else {
-        churchEntries.push(entry);
-      }
-      localStorage.setItem("dgm_church_entries", JSON.stringify(churchEntries));
-
       try {
         const res = await fetch(SCRIPT_URL, {
           method: "POST",
@@ -1635,22 +1567,25 @@
           body: JSON.stringify(entry)
         });
         const json = await res.json();
-        if (json.status !== "success" && json.result !== "success") throw new Error("Server error");
-        alert(isEditingMode ? `✓ Record updated (${fullRegNo})!` : `✓ New Record Saved!\nReg No: ${fullRegNo}\nDate: ${formattedEntryDate}`);
+        if (json.status === "duplicate_error") {
+          alert(json.message);
+          document.getElementById("manualSeqInput").focus();
+          return;
+        }
+        if (json.status !== "success" && json.result !== "success") {
+          throw new Error(json.message || "Server error");
+        }
+        
+        alert(isEditingMode ? `✓ Record updated in Google Sheet (${fullRegNo})!` : `✓ New Record Saved to Google Sheet!\nReg No: ${fullRegNo}\nDate: ${formattedEntryDate}`);
+        isEditingMode = false;
+        editingRecordId = null;
+        await syncDataFromSheet();
+        closeNewEntryModal();
       } catch (err) {
-        console.warn("Offline: Queued for background sync", err);
-        let queue = JSON.parse(localStorage.getItem("dgm_offline_queue") || "[]");
-        queue.push(entry);
-        localStorage.setItem("dgm_offline_queue", JSON.stringify(queue));
-        alert(`Saved locally (${fullRegNo})! Will sync to Google Sheets automatically.`);
+        alert("Failed to save to Google Sheet. Please check your internet connection and try again.");
       } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = origText;
-        isEditingMode = false;
-        editingRecordId = null;
-        await processOfflineQueue();
-        await syncDataFromSheet();
-        closeNewEntryModal();
       }
     }
 
@@ -1806,7 +1741,6 @@
 
     async function openSearchModal() {
       document.getElementById("searchModal").classList.remove("hidden");
-      handleSearch();
       await syncDataFromSheet();
       handleSearch();
     }
@@ -1832,6 +1766,7 @@
 
         const nameVal = getSheetField(item, 'name').toLowerCase();
         const relVal = getSheetField(item, 'relativeName').toLowerCase();
+        const occVal = getSheetField(item, 'occupation').toLowerCase();
         const addrVal = getSheetField(item, 'address').toLowerCase();
         const cityVal = getSheetField(item, 'city').toLowerCase();
         const distVal = getSheetField(item, 'district').toLowerCase();
@@ -1843,6 +1778,7 @@
         const matchText = !q || 
           nameVal.includes(q) ||
           relVal.includes(q) ||
+          occVal.includes(q) ||
           addrVal.includes(q) ||
           cityVal.includes(q) ||
           distVal.includes(q) ||
@@ -1969,6 +1905,7 @@
 
       document.getElementById("pName").innerText = nameStr;
       document.getElementById("pRelative").innerText = getSheetField(rec, 'relativeName') || '-';
+      document.getElementById("pOccupation").innerText = getSheetField(rec, 'occupation') || '-';
       document.getElementById("pAadhaar").innerText = getSheetField(rec, 'aadhaar') || 'Not Provided';
       document.getElementById("pMobile").innerText = getSheetField(rec, 'mobile') || '-';
       document.getElementById("pAddress").innerText = getSheetField(rec, 'address') || '-';
@@ -2029,14 +1966,14 @@
       const isEnglish = getSheetField(rec, 'declarationLang').toLowerCase().includes('eng');
 
       if (isEnglish) {
-        declBox.className = "text-[11.5px] leading-snug text-black text-justify bg-slate-50 p-2.5 rounded border border-slate-300 mt-1.5 font-sans";
+        declBox.className = "text-[12px] leading-relaxed text-black text-justify bg-slate-50 p-3 rounded border border-slate-400 mt-2 font-sans";
         declBox.innerHTML = `
           <strong>Subject: Regarding attending DGM Bethel Church for prayer and healing</strong><br>
           <strong>"Self-Declaration"</strong><br>
           I, <u>${personName}</u> and my family, I have come to meet Pastor Sunil John Dsouza and receive prayer of my own free will and based on my personal decision. I have not been subjected to any kind of pressure, coercion, inducement or any other form of pressure on me by Pastor Sunil and his family or any member of his church in this matter. My belief in prayer and healing is based on personal and independent decisions. I affirm that all the details written above are true and provided of my own free will. I have voluntarily provided all the information mentioned above.
         `;
       } else {
-        declBox.className = "kannada text-[11.5px] leading-snug text-black text-justify bg-slate-50 p-2.5 rounded border border-slate-300 mt-1.5";
+        declBox.className = "kannada text-[12px] leading-relaxed text-black text-justify bg-slate-50 p-3 rounded border border-slate-400 mt-2";
         declBox.innerHTML = `
           <strong>ವಿಷಯ: ಪ್ರಾರ್ಥನೆ ಮತ್ತು ಸ್ವಸ್ಥತೆಗಾಗಿ ಡಿಜಿಎಮ್ ಬೇತೇಲ್ ಚರ್ಚ್ಗೆ ಹಾಜರಾಗಲು ಸಿದ್ಧರಿರುವ ಬಗ್ಗೆ</strong><br>
           <strong>"ಸ್ವಯಂ ಘೋಷಣೆ"</strong><br>
@@ -2073,7 +2010,7 @@
       const element = document.getElementById("printableArea");
       const pName = getSheetField(activePreviewRecord, 'name') || 'Registration';
       const opt = {
-        margin: [5, 5, 5, 5],
+        margin: [6, 6, 6, 6],
         filename: `DGM_Bethel_${pName.replace(/\s+/g, '_')}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0 },
@@ -2095,6 +2032,7 @@
       const distVal = document.getElementById("districtInput").value.trim();
       const stateVal = document.getElementById("stateInput").value.trim() || "Karnataka";
       const pinVal = document.getElementById("pincodeInput").value.trim();
+      const occVal = document.getElementById("occupationInput").value.trim();
       const fullReg = buildRegistrationNumber(dt, manualSeqVal);
 
       const tempRec = {
@@ -2110,6 +2048,7 @@
         dobFormatted: parseDateToDDMMYYYY(dobVal),
         name: document.getElementById("nameInput").value.trim() || "-",
         relativeName: document.getElementById("relativeNameInput").value.trim() || "-",
+        occupation: occVal || "-",
         aadhaar: document.getElementById("aadhaarInput").value.trim() || "Not Provided",
         mobile: document.getElementById("mobileInput").value.trim() || "-",
         address: document.getElementById("addressInput").value.trim() || "-",
@@ -2220,17 +2159,28 @@
       promptShareModal(title, text);
     }
 
+    // Finds the next unused Registration Number (1-800) specifically for the selected date
     function getNextDefaultSeq() {
-      let maxSeq = 0;
+      const dt = document.getElementById("entryDate")?.value || new Date().toISOString().split('T')[0];
+      const usedSet = new Set();
+
+      const normalized = normalizeToYMD(dt);
+      const parts = normalized.split('-');
+      const prefix = `dgmbc/${(parts[2] || "01").padStart(2, '0')}/${(parts[1] || "01").padStart(2, '0')}/${parts[0]}/`.toLowerCase();
+
       churchEntries.forEach(r => {
-        const full = getFullRegNoFromRecord(r);
-        const parts = String(full).split('/');
-        if (parts.length >= 5 && !isNaN(parts[4]) && parts[4] !== "") {
-          const n = parseInt(parts[4], 10);
-          if (n > maxSeq && n < 800) maxSeq = n;
+        const full = getFullRegNoFromRecord(r).toLowerCase();
+        if (full.startsWith(prefix)) {
+          const seqPart = full.slice(prefix.length);
+          const n = parseInt(seqPart, 10);
+          if (!isNaN(n)) usedSet.add(n);
         }
       });
-      return maxSeq + 1 <= 800 ? maxSeq + 1 : 1;
+
+      for (let i = 1; i <= 800; i++) {
+        if (!usedSet.has(i)) return i;
+      }
+      return 1;
     }
 
     function openNewEntryModal() {
@@ -2238,9 +2188,10 @@
       editingRecordId = null;
       document.getElementById("formModalTitle").innerText = "New Entry / ಹೊಸ ನೋಂದಣಿ";
       document.getElementById("registrationForm").reset();
-      document.getElementById("manualSeqInput").value = getNextDefaultSeq();
       document.getElementById("stateInput").value = "Karnataka";
       initTodaysDate();
+      document.getElementById("manualSeqInput").value = getNextDefaultSeq();
+      updateRegNoPreview();
       removePhoto();
       document.getElementById("refillFeedback").classList.add("hidden");
       document.getElementById("registrationModal").classList.remove("hidden");
