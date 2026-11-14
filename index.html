@@ -10,6 +10,9 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- html2pdf.js for client-side PDF export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- html5-qrcode & pako for Aadhaar QR Code Scanning & Decompression -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
 
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Noto+Sans+Kannada:wght@400;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
@@ -155,6 +158,37 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ================= AADHAAR QR SCANNER MODAL ================= -->
+  <div id="aadhaarQrModal" class="fixed inset-0 z-[65] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 hidden">
+    <div class="bg-slate-900 border border-amber-500/50 rounded-2xl max-w-md w-full p-4 sm:p-5 flex flex-col items-center shadow-2xl space-y-3">
+      <div class="w-full flex justify-between items-center border-b border-slate-800 pb-2">
+        <h4 class="text-xs sm:text-sm font-bold text-amber-400 flex items-center space-x-2">
+          <i class="fa-solid fa-qrcode"></i>
+          <span>Scan Aadhaar Card QR Code</span>
+        </h4>
+        <button type="button" onclick="closeAadhaarQrScanner()" class="text-slate-400 hover:text-white text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <p class="text-[11px] text-slate-300 text-center">Point your camera at the QR code on the Aadhaar card, or tap the button below to snap/upload a clear photo of the QR code.</p>
+
+      <div id="qrReaderBox" class="w-full bg-black rounded-xl overflow-hidden border border-slate-700 min-h-[240px] flex items-center justify-center"></div>
+
+      <p id="qrStatusMsg" class="text-[11px] text-amber-300 font-medium text-center"></p>
+
+      <div class="w-full flex items-center justify-between gap-2 pt-1">
+        <label class="flex-1 py-2 px-3 bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/40 rounded-lg text-xs font-semibold text-center cursor-pointer transition">
+          <i class="fa-solid fa-camera mr-1"></i> Take / Upload QR Photo
+          <input type="file" id="qrImageFileInput" accept="image/*" capture="environment" class="hidden" onchange="scanAadhaarQrFromFile(event)">
+        </label>
+        <button type="button" onclick="closeAadhaarQrScanner()" class="py-2 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold">
+          Cancel
+        </button>
+      </div>
     </div>
   </div>
 
@@ -357,16 +391,22 @@
           </div>
         </div>
 
-        <!-- Identification & Mobile -->
+        <!-- Identification (with Aadhaar QR Scanner) & Mobile -->
         <div class="bg-amber-950/20 border border-amber-500/30 p-2.5 rounded-lg grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <div class="flex justify-between items-center mb-0.5">
               <label class="font-bold text-amber-400 text-xs">ಆಧಾರ್ ಸಂಖ್ಯೆ / Aadhar No: <span class="text-slate-400 font-normal">(Optional)</span></label>
-              <span class="text-[10px] text-amber-300 italic">Auto-fills on 12 digits</span>
+              <span class="text-[10px] text-amber-300 italic">Scan QR or enter 12 digits</span>
             </div>
-            <input type="text" id="aadhaarInput" maxlength="12" placeholder="12 Digit Aadhaar"
-              oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 12); if (this.value.length === 12) triggerAutoRefill('aadhaar', this.value);"
-              class="w-full bg-slate-800 border border-amber-500/40 rounded px-2.5 py-2 text-slate-100 font-semibold tracking-wider text-xs focus:border-amber-400 focus:outline-none">
+            <div class="flex space-x-1.5">
+              <input type="text" id="aadhaarInput" maxlength="12" placeholder="12 Digit Aadhaar"
+                oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 12); if (this.value.length === 12) triggerAutoRefill('aadhaar', this.value);"
+                class="w-full bg-slate-800 border border-amber-500/40 rounded px-2.5 py-2 text-slate-100 font-semibold tracking-wider text-xs focus:border-amber-400 focus:outline-none">
+              <button type="button" onclick="openAadhaarQrScanner()" class="px-3 py-2 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold rounded text-xs shrink-0 flex items-center space-x-1 shadow" title="Scan Aadhaar Card QR Code">
+                <i class="fa-solid fa-qrcode"></i>
+                <span>Scan QR</span>
+              </button>
+            </div>
           </div>
           <div>
             <div class="flex justify-between items-center mb-0.5">
@@ -797,11 +837,11 @@
     let activePreviewRecord = null;
     let isEditingMode = false;
     let editingRecordId = null;
+    let html5QrScanner = null;
 
     let pendingShareData = { title: "", text: "", url: "" };
 
     document.addEventListener("DOMContentLoaded", () => {
-      // Remove any old local cache so Search List strictly shows only Google Sheet records
       localStorage.removeItem("dgm_church_entries");
       localStorage.removeItem("dgm_deleted_ids");
 
@@ -849,6 +889,252 @@
       document.querySelectorAll(".logo-insert").forEach(el => {
         el.innerHTML = template;
       });
+    }
+
+    // ================= OPTION A: AADHAAR QR CODE SCANNER & PARSER (WITH MULTI-CAMERA FALLBACK) =================
+    async function openAadhaarQrScanner() {
+      // 1. Stop the visitor photo camera if it is currently running
+      stopCamera();
+
+      // 2. Show the modal first
+      document.getElementById("aadhaarQrModal").classList.remove("hidden");
+      const statusMsg = document.getElementById("qrStatusMsg");
+      statusMsg.innerText = "Starting camera...";
+
+      // 3. Check if browser is blocking live video due to file:// or http://
+      if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        statusMsg.innerText = "Live video requires HTTPS. Tap 'Take / Upload QR Photo' below to scan with your camera!";
+        return;
+      }
+
+      // 4. Wait 150ms for modal layout to render before initializing scanner
+      setTimeout(async () => {
+        try {
+          if (html5QrScanner) {
+            await html5QrScanner.stop().catch(() => {});
+            html5QrScanner.clear();
+          }
+        } catch (e) {}
+
+        html5QrScanner = new Html5Qrcode("qrReaderBox");
+        const qrConfig = { fps: 10, qrbox: { width: 220, height: 220 } };
+
+        try {
+          // Try Rear Camera first (for phones)
+          await html5QrScanner.start(
+            { facingMode: "environment" },
+            qrConfig,
+            (decodedText) => handleAadhaarQrDecoded(decodedText),
+            () => {}
+          );
+          statusMsg.innerText = "Hold the Aadhaar card QR code steady inside the box.";
+        } catch (errRear) {
+          try {
+            // Fallback to Front/Default Webcam (for laptops/PCs)
+            await html5QrScanner.start(
+              { facingMode: "user" },
+              qrConfig,
+              (decodedText) => handleAadhaarQrDecoded(decodedText),
+              () => {}
+            );
+            statusMsg.innerText = "Hold the Aadhaar card QR code steady in front of your webcam.";
+          } catch (errFront) {
+            try {
+              // Final fallback: enumerate all cameras and pick the last available device ID
+              const devices = await Html5Qrcode.getCameras();
+              if (devices && devices.length > 0) {
+                const camId = devices[devices.length - 1].id;
+                await html5QrScanner.start(
+                  camId,
+                  qrConfig,
+                  (decodedText) => handleAadhaarQrDecoded(decodedText),
+                  () => {}
+                );
+                statusMsg.innerText = "Hold the Aadhaar card QR code steady inside the box.";
+              } else {
+                throw new Error("No camera found");
+              }
+            } catch (errFinal) {
+              statusMsg.innerText = "Camera permission denied or unavailable. Tap 'Take / Upload QR Photo' below.";
+            }
+          }
+        }
+      }, 150);
+    }
+
+    async function closeAadhaarQrScanner() {
+      if (html5QrScanner) {
+        try {
+          await html5QrScanner.stop();
+          html5QrScanner.clear();
+        } catch (e) {}
+        html5QrScanner = null;
+      }
+      document.getElementById("aadhaarQrModal").classList.add("hidden");
+    }
+
+    async function scanAadhaarQrFromFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const statusMsg = document.getElementById("qrStatusMsg");
+      statusMsg.innerText = "Reading QR code from image...";
+
+      try {
+        if (html5QrScanner) {
+          await html5QrScanner.stop().catch(() => {});
+        } else {
+          html5QrScanner = new Html5Qrcode("qrReaderBox");
+        }
+        const decodedText = await html5QrScanner.scanFile(file, true);
+        handleAadhaarQrDecoded(decodedText);
+      } catch (err) {
+        statusMsg.innerText = "Could not detect a valid QR code in this image. Please try a clearer photo.";
+      } finally {
+        event.target.value = "";
+      }
+    }
+
+    // BigInt string to byte array converter for UIDAI Secure QR codes
+    function bigIntStringToBytes(decStr) {
+      let big = BigInt(decStr.trim());
+      const bytes = [];
+      while (big > 0n) {
+        bytes.push(Number(big & 0xffn));
+        big >>= 8n;
+      }
+      return new Uint8Array(bytes.reverse());
+    }
+
+    function handleAadhaarQrDecoded(rawText) {
+      if (!rawText) return;
+      const trimmed = rawText.trim();
+      let parsedData = null;
+
+      // Format 1: XML PrintLetterBarcodeData QR
+      if (trimmed.includes("<PrintLetterBarcodeData") || trimmed.startsWith("<?xml") || trimmed.startsWith("<")) {
+        try {
+          const parser = new DOMParser();
+          const xmlDoc = parser.parseFromString(trimmed, "text/xml");
+          const node = xmlDoc.querySelector("PrintLetterBarcodeData") || xmlDoc.documentElement;
+          if (node) {
+            const getAttr = (names) => {
+              for (const n of names) {
+                const v = node.getAttribute(n) || node.getAttribute(n.toLowerCase()) || node.getAttribute(n.toUpperCase());
+                if (v) return v.trim();
+              }
+              return "";
+            };
+            const house = getAttr(["house", "building"]);
+            const street = getAttr(["street", "road"]);
+            const lm = getAttr(["lm", "landmark"]);
+            const loc = getAttr(["loc", "locality", "po"]);
+            const vtc = getAttr(["vtc", "subdist"]);
+
+            parsedData = {
+              uid: getAttr(["uid"]).replace(/[^0-9]/g, ""),
+              name: getAttr(["name"]),
+              careOf: getAttr(["co", "gname", "careof"]).replace(/^(S\/O|D\/O|W\/O|C\/O)[:\s-]*/i, "").trim(),
+              gender: getAttr(["gender", "sex"]),
+              dob: getAttr(["dob", "yob"]),
+              address: [house, street, lm, loc].filter(Boolean).join(", "),
+              city: vtc || loc,
+              district: getAttr(["dist", "district"]),
+              state: getAttr(["state"]),
+              pincode: getAttr(["pc", "pincode"])
+            };
+          }
+        } catch (e) {
+          console.warn("XML Aadhaar QR parse error:", e);
+        }
+      }
+      // Format 2: UIDAI Secure Numeric QR Code (Gzip compressed byte array)
+      else if (/^\d{100,}$/.test(trimmed) && typeof pako !== "undefined") {
+        try {
+          const compressedBytes = bigIntStringToBytes(trimmed);
+          const decompressed = pako.inflate(compressedBytes);
+
+          const fields = [];
+          let start = 0;
+          const decoder = new TextDecoder("utf-8");
+          for (let i = 0; i < decompressed.length; i++) {
+            if (decompressed[i] === 255) {
+              fields.push(decoder.decode(decompressed.subarray(start, i)).trim());
+              start = i + 1;
+              if (fields.length >= 18) break;
+            }
+          }
+
+          const offset = (fields[0] && /^\d+$/.test(fields[0]) && fields[0].length <= 2) ? 1 : 0;
+          const refId = fields[offset] || "";
+          const name = fields[offset + 1] || "";
+          const dob = fields[offset + 2] || "";
+          const gender = fields[offset + 3] || "";
+          const careOf = (fields[offset + 4] || "").replace(/^(S\/O|D\/O|W\/O|C\/O)[:\s-]*/i, "").trim();
+          const district = fields[offset + 5] || "";
+          const landmark = fields[offset + 6] || "";
+          const house = fields[offset + 7] || "";
+          const location = fields[offset + 8] || "";
+          const pincode = fields[offset + 9] || "";
+          const postOffice = fields[offset + 10] || "";
+          const state = fields[offset + 11] || "";
+          const street = fields[offset + 12] || "";
+          const vtc = fields[offset + 14] || "";
+
+          parsedData = {
+            uid: refId.length >= 4 ? refId.slice(0, 4).replace(/[^0-9]/g, "") : "",
+            name: name,
+            careOf: careOf,
+            gender: gender,
+            dob: dob,
+            address: [house, street, landmark, location, postOffice].filter(Boolean).join(", "),
+            city: vtc || postOffice || location,
+            district: district,
+            state: state,
+            pincode: pincode
+          };
+        } catch (e) {
+          console.warn("Secure QR decompress error:", e);
+        }
+      }
+
+      if (parsedData && (parsedData.name || parsedData.pincode)) {
+        closeAadhaarQrScanner();
+
+        if (parsedData.uid && parsedData.uid.length === 12) {
+          document.getElementById("aadhaarInput").value = parsedData.uid;
+        }
+        if (parsedData.name) document.getElementById("nameInput").value = parsedData.name;
+        if (parsedData.careOf) document.getElementById("relativeNameInput").value = parsedData.careOf;
+        if (parsedData.address) document.getElementById("addressInput").value = parsedData.address;
+        if (parsedData.pincode) {
+          document.getElementById("pincodeInput").value = parsedData.pincode;
+          handlePincodeLookup(parsedData.pincode);
+        }
+        if (parsedData.city) document.getElementById("cityInput").value = parsedData.city;
+        if (parsedData.district) document.getElementById("districtInput").value = parsedData.district;
+        if (parsedData.state) document.getElementById("stateInput").value = parsedData.state;
+
+        if (parsedData.gender) {
+          const g = parsedData.gender.toUpperCase();
+          if (g.startsWith("F")) document.getElementById("genderInput").value = "F";
+          else if (g.startsWith("M")) document.getElementById("genderInput").value = "M";
+          else document.getElementById("genderInput").value = "Other";
+        }
+
+        if (parsedData.dob) {
+          if (/^\d{4}$/.test(parsedData.dob)) {
+            document.getElementById("dobInput").value = `${parsedData.dob}-01-01`;
+          } else {
+            document.getElementById("dobInput").value = normalizeToYMD(parsedData.dob);
+          }
+        }
+
+        const feedback = document.getElementById("refillFeedback");
+        feedback.innerText = `✓ Aadhaar QR Scanned Successfully for "${parsedData.name}"!`;
+        feedback.classList.remove("hidden");
+      } else {
+        document.getElementById("qrStatusMsg").innerText = "Unrecognized QR format. Please scan a valid Aadhaar card QR code.";
+      }
     }
 
     // Helper to collect all 5 visitors along with their respective diseases
@@ -1619,7 +1905,6 @@
         await syncDataFromSheet();
         closeNewEntryModal();
       } catch (err) {
-        // Hidden Offline Upload Queue: Queues the entry if internet drops so nothing is lost, while keeping Search List 100% Google Sheet only
         let queue = JSON.parse(localStorage.getItem("dgm_offline_queue") || "[]");
         queue.push(entry);
         localStorage.setItem("dgm_offline_queue", JSON.stringify(queue));
@@ -2245,6 +2530,7 @@
 
     function closeNewEntryModal() {
       stopCamera();
+      closeAadhaarQrScanner();
       document.getElementById("registrationModal").classList.add("hidden");
       isEditingMode = false;
       editingRecordId = null;
