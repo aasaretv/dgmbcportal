@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- html2pdf.js for client-side PDF export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <!-- html5-qrcode, jsQR & pako for Desktop + Mobile Aadhaar QR Code Scanning & Decompression -->
+  <!-- html5-qrcode, jsQR & pako for Live Camera + Image Aadhaar QR Code Scanning & Decompression -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
@@ -162,7 +162,7 @@
     </div>
   </div>
 
-  <!-- ================= AADHAAR QR SCANNER MODAL ================= -->
+  <!-- ================= AADHAAR QR SCANNER MODAL (LIVE CAMERA + MOBILE SNAP + UPLOAD) ================= -->
   <div id="aadhaarQrModal" class="fixed inset-0 z-[65] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 hidden">
     <div class="bg-slate-900 border border-amber-500/50 rounded-2xl max-w-md w-full p-4 sm:p-5 flex flex-col items-center shadow-2xl space-y-3">
       <div class="w-full flex justify-between items-center border-b border-slate-800 pb-2">
@@ -170,23 +170,53 @@
           <i class="fa-solid fa-qrcode"></i>
           <span>Scan Aadhaar Card QR Code</span>
         </h4>
-        <button type="button" onclick="closeAadhaarQrScanner()" class="text-slate-400 hover:text-white text-lg">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
+        <div class="flex items-center space-x-2">
+          <button type="button" onclick="flipQrCamera()" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded text-[11px] border border-slate-700 flex items-center space-x-1" title="Switch Front/Rear Camera">
+            <i class="fa-solid fa-camera-rotate"></i>
+            <span>Flip Cam</span>
+          </button>
+          <button type="button" onclick="closeAadhaarQrScanner()" class="text-slate-400 hover:text-white text-lg px-1">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
       </div>
 
-      <p class="text-[11px] text-slate-300 text-center">Point your camera closely at the large QR code on the Aadhaar card, or click below to upload a photo/cropped image of the QR code.</p>
+      <p class="text-[11px] text-slate-300 text-center">Hold the Aadhaar QR code steady inside the live camera view, or use <strong>Camera Snap</strong> / <strong>Upload File</strong> below.</p>
 
-      <div id="qrReaderBox" class="w-full bg-black rounded-xl overflow-hidden border border-slate-700 min-h-[240px] flex items-center justify-center"></div>
+      <!-- Live Video / Preview Box -->
+      <div id="qrReaderBox" class="relative w-full bg-black rounded-xl overflow-hidden border border-slate-700 min-h-[250px] flex items-center justify-center">
+        <video id="nativeQrVideo" autoplay playsinline muted class="w-full h-64 object-cover hidden"></video>
+        <!-- Scanning target overlay -->
+        <div id="qrTargetOverlay" class="pointer-events-none absolute inset-0 flex items-center justify-center hidden">
+          <div class="w-48 h-48 border-2 border-amber-400/80 rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]"></div>
+        </div>
+      </div>
 
       <p id="qrStatusMsg" class="text-[11px] text-amber-300 font-medium text-center"></p>
 
-      <div class="w-full flex items-center justify-between gap-2 pt-1">
-        <label class="flex-1 py-2 px-3 bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/40 rounded-lg text-xs font-semibold text-center cursor-pointer transition">
-          <i class="fa-solid fa-file-arrow-up mr-1"></i> Upload Aadhaar / QR Image
+      <!-- Action Buttons: Live Camera, Native Mobile Camera Snap, and File Upload -->
+      <div class="w-full grid grid-cols-2 gap-2 pt-1">
+        <!-- Mobile Native Camera Capture (Forces Phone Camera App) -->
+        <label class="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold text-center cursor-pointer transition flex items-center justify-center space-x-1.5 shadow">
+          <i class="fa-solid fa-camera"></i>
+          <span>Camera Snap QR</span>
+          <input type="file" id="qrCameraCaptureInput" accept="image/*" capture="environment" class="hidden" onchange="scanAadhaarQrFromFile(event)">
+        </label>
+
+        <!-- Gallery / Desktop File Picker -->
+        <label class="py-2.5 px-3 bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/40 rounded-lg text-xs font-semibold text-center cursor-pointer transition flex items-center justify-center space-x-1.5">
+          <i class="fa-solid fa-file-arrow-up"></i>
+          <span>Upload Image</span>
           <input type="file" id="qrImageFileInput" accept="image/*" class="hidden" onchange="scanAadhaarQrFromFile(event)">
         </label>
-        <button type="button" onclick="closeAadhaarQrScanner()" class="py-2 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold">
+      </div>
+
+      <div class="w-full flex justify-between items-center pt-1">
+        <button type="button" onclick="startLiveQrVideo()" class="text-[11px] text-amber-400 hover:underline flex items-center space-x-1">
+          <i class="fa-solid fa-video"></i>
+          <span>Restart Live Camera</span>
+        </button>
+        <button type="button" onclick="closeAadhaarQrScanner()" class="py-1.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold">
           Cancel
         </button>
       </div>
@@ -840,9 +870,11 @@
     let activePreviewRecord = null;
     let isEditingMode = false;
     let editingRecordId = null;
-    let html5QrScanner = null;
+
+    // Live QR Camera State
     let qrVideoStream = null;
     let qrScanInterval = null;
+    let qrFacingMode = "environment";
 
     // Session-level map of saved IDs -> RegNo so Google Sheet sync delays never alter a newly saved Reg No.
     const verifiedRegNoMap = new Map();
@@ -925,115 +957,20 @@
       });
     }
 
-    // ================= UPGRADED DESKTOP + MOBILE AADHAAR QR CODE SCANNER & PARSER =================
+    // ================= DIRECT LIVE CAMERA + IMAGE AADHAAR QR SCANNER =================
     async function openAadhaarQrScanner() {
       stopCamera();
       document.getElementById("aadhaarQrModal").classList.remove("hidden");
-      const statusMsg = document.getElementById("qrStatusMsg");
-      const readerBox = document.getElementById("qrReaderBox");
-      statusMsg.innerText = "Starting High-Definition Camera...";
-
-      if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-        statusMsg.innerText = "Live camera requires HTTPS. Click 'Upload Aadhaar / QR Image' below to scan!";
-        return;
-      }
-
-      if ('BarcodeDetector' in window) {
-        try {
-          qrVideoStream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              facingMode: { ideal: "environment" },
-              width: { ideal: 1920 },
-              height: { ideal: 1080 },
-              focusMode: { ideal: "continuous" }
-            },
-            audio: false
-          });
-
-          readerBox.innerHTML = `<video id="nativeQrVideo" autoplay playsinline muted class="w-full h-64 object-cover rounded-xl"></video>`;
-          const videoEl = document.getElementById("nativeQrVideo");
-          videoEl.srcObject = qrVideoStream;
-          await videoEl.play();
-
-          const detector = new BarcodeDetector({ formats: ['qr_code'] });
-          statusMsg.innerText = "Hold the Aadhaar QR code 10–15 cm from the camera until it focuses.";
-
-          qrScanInterval = setInterval(async () => {
-            if (!videoEl || videoEl.readyState < 2) return;
-            try {
-              const barcodes = await detector.detect(videoEl);
-              if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
-                handleAadhaarQrDecoded(barcodes[0].rawValue);
-              }
-            } catch (e) {}
-          }, 200);
-          return;
-        } catch (nativeErr) {
-          console.warn("Native BarcodeDetector fallback to Html5Qrcode:", nativeErr);
-        }
-      }
-
-      setTimeout(async () => {
-        try {
-          if (html5QrScanner) {
-            await html5QrScanner.stop().catch(() => {});
-            html5QrScanner.clear();
-          }
-        } catch (e) {}
-
-        readerBox.innerHTML = "";
-        html5QrScanner = new Html5Qrcode("qrReaderBox");
-        const qrConfig = {
-          fps: 15,
-          qrbox: { width: 250, height: 250 },
-          videoConstraints: {
-            facingMode: { ideal: "environment" },
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-          }
-        };
-
-        try {
-          await html5QrScanner.start(
-            { facingMode: "environment" },
-            qrConfig,
-            (decodedText) => handleAadhaarQrDecoded(decodedText),
-            () => {}
-          );
-          statusMsg.innerText = "Move camera close to the Aadhaar QR code (fill the square).";
-        } catch (errRear) {
-          try {
-            await html5QrScanner.start(
-              { facingMode: "user" },
-              { fps: 15, qrbox: { width: 250, height: 250 } },
-              (decodedText) => handleAadhaarQrDecoded(decodedText),
-              () => {}
-            );
-            statusMsg.innerText = "Hold the Aadhaar QR code steady in front of your webcam, or click 'Upload Aadhaar / QR Image' below.";
-          } catch (errFront) {
-            try {
-              const devices = await Html5Qrcode.getCameras();
-              if (devices && devices.length > 0) {
-                const camId = devices[devices.length - 1].id;
-                await html5QrScanner.start(
-                  camId,
-                  qrConfig,
-                  (decodedText) => handleAadhaarQrDecoded(decodedText),
-                  () => {}
-                );
-                statusMsg.innerText = "Hold the Aadhaar card QR code steady inside the box.";
-              } else {
-                throw new Error("No camera found");
-              }
-            } catch (errFinal) {
-              statusMsg.innerText = "Camera unavailable. Click 'Upload Aadhaar / QR Image' below to scan from file.";
-            }
-          }
-        }
-      }, 150);
+      qrFacingMode = "environment";
+      await startLiveQrVideo();
     }
 
-    async function closeAadhaarQrScanner() {
+    async function flipQrCamera() {
+      qrFacingMode = qrFacingMode === "environment" ? "user" : "environment";
+      await startLiveQrVideo();
+    }
+
+    function stopLiveQrStreamOnly() {
       if (qrScanInterval) {
         clearInterval(qrScanInterval);
         qrScanInterval = null;
@@ -1042,13 +979,127 @@
         qrVideoStream.getTracks().forEach(t => t.stop());
         qrVideoStream = null;
       }
-      if (html5QrScanner) {
-        try {
-          await html5QrScanner.stop();
-          html5QrScanner.clear();
-        } catch (e) {}
-        html5QrScanner = null;
+    }
+
+    async function startLiveQrVideo() {
+      stopLiveQrStreamOnly();
+
+      const statusMsg = document.getElementById("qrStatusMsg");
+      const readerBox = document.getElementById("qrReaderBox");
+
+      // Restore video element inside readerBox if it was replaced by an uploaded image preview
+      if (!document.getElementById("nativeQrVideo")) {
+        readerBox.innerHTML = `
+          <video id="nativeQrVideo" autoplay playsinline muted class="w-full h-64 object-cover hidden"></video>
+          <div id="qrTargetOverlay" class="pointer-events-none absolute inset-0 flex items-center justify-center hidden">
+            <div class="w-48 h-48 border-2 border-amber-400/80 rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]"></div>
+          </div>
+        `;
       }
+
+      const videoEl = document.getElementById("nativeQrVideo");
+      const overlayEl = document.getElementById("qrTargetOverlay");
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        statusMsg.innerText = "Live camera requires HTTPS. Tap the green 'Camera Snap QR' button below to scan directly with your phone camera!";
+        return;
+      }
+
+      statusMsg.innerText = "Opening live camera...";
+
+      // Progressive camera constraints so mobile phones never fail with OverconstrainedError
+      const constraintList = [
+        { video: { facingMode: { ideal: qrFacingMode }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
+        { video: { facingMode: qrFacingMode }, audio: false },
+        { video: true, audio: false }
+      ];
+
+      let stream = null;
+      for (const c of constraintList) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia(c);
+          if (stream) break;
+        } catch (err) {}
+      }
+
+      if (!stream) {
+        statusMsg.innerText = "Camera permission blocked or unavailable. Tap 'Camera Snap QR' below to use your phone's camera!";
+        return;
+      }
+
+      qrVideoStream = stream;
+      videoEl.srcObject = stream;
+      videoEl.classList.remove("hidden");
+      if (overlayEl) overlayEl.classList.remove("hidden");
+
+      try {
+        await videoEl.play();
+      } catch (e) {}
+
+      statusMsg.innerText = "Scanning live... Hold the Aadhaar QR code inside the yellow square.";
+
+      // Prepare both Native BarcodeDetector AND jsQR Canvas frame scanner so every mobile & desktop browser scans live
+      let nativeDetector = null;
+      if ('BarcodeDetector' in window) {
+        try {
+          nativeDetector = new BarcodeDetector({ formats: ['qr_code'] });
+        } catch (e) {
+          nativeDetector = null;
+        }
+      }
+
+      const scanCanvas = document.createElement("canvas");
+      const scanCtx = scanCanvas.getContext("2d", { willReadFrequently: true });
+
+      qrScanInterval = setInterval(async () => {
+        if (!videoEl || videoEl.readyState < 2 || videoEl.paused) return;
+
+        // 1. Try Hardware BarcodeDetector first
+        if (nativeDetector) {
+          try {
+            const barcodes = await nativeDetector.detect(videoEl);
+            if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
+              handleAadhaarQrDecoded(barcodes[0].rawValue);
+              return;
+            }
+          } catch (e) {}
+        }
+
+        // 2. Simultaneously run jsQR frame decoder on the live video feed (works on iOS Safari, Android Chrome, Desktop)
+        if (typeof jsQR === "function") {
+          try {
+            const vw = videoEl.videoWidth || 640;
+            const vh = videoEl.videoHeight || 480;
+            scanCanvas.width = vw;
+            scanCanvas.height = vh;
+            scanCtx.drawImage(videoEl, 0, 0, vw, vh);
+
+            // Scan full video frame
+            const imgData = scanCtx.getImageData(0, 0, vw, vh);
+            const code = jsQR(imgData.data, vw, vh, { inversionAttempts: "dontInvert" });
+            if (code && code.data && code.data.trim().length > 20) {
+              handleAadhaarQrDecoded(code.data);
+              return;
+            }
+
+            // Also scan center zoomed crop of the video frame for dense Aadhaar QR codes
+            const cx = Math.floor(vw * 0.2);
+            const cy = Math.floor(vh * 0.2);
+            const cw = Math.floor(vw * 0.6);
+            const ch = Math.floor(vh * 0.6);
+            const centerData = scanCtx.getImageData(cx, cy, cw, ch);
+            const centerCode = jsQR(centerData.data, cw, ch, { inversionAttempts: "dontInvert" });
+            if (centerCode && centerCode.data && centerCode.data.trim().length > 20) {
+              handleAadhaarQrDecoded(centerCode.data);
+              return;
+            }
+          } catch (e) {}
+        }
+      }, 220);
+    }
+
+    async function closeAadhaarQrScanner() {
+      stopLiveQrStreamOnly();
       document.getElementById("aadhaarQrModal").classList.add("hidden");
     }
 
@@ -1122,17 +1173,7 @@
       statusMsg.innerText = "Scanning image across multiple zoom regions...";
 
       try {
-        if (qrScanInterval) {
-          clearInterval(qrScanInterval);
-          qrScanInterval = null;
-        }
-        if (qrVideoStream) {
-          qrVideoStream.getTracks().forEach(t => t.stop());
-          qrVideoStream = null;
-        }
-        if (html5QrScanner) {
-          await html5QrScanner.stop().catch(() => {});
-        }
+        stopLiveQrStreamOnly();
 
         const img = await loadFileAsImage(file);
         const W = img.naturalWidth || img.width;
@@ -1187,10 +1228,10 @@
           document.body.removeChild(tempDiv);
         }
 
-        statusMsg.innerText = "Could not read QR from full card photo. Tip: On desktop, use Snipping Tool (Win+Shift+S) to crop JUST the QR code square and upload that cropped image!";
+        statusMsg.innerText = "Could not read QR from full card photo. Tip: Move closer to JUST the QR code square or crop the QR square and try again!";
       } catch (err) {
-        console.error("Desktop QR File Scan Error:", err);
-        statusMsg.innerText = "Could not read QR code. Please crop just the QR square and try again.";
+        console.error("QR File Scan Error:", err);
+        statusMsg.innerText = "Could not read QR code. Please take a closer photo of just the QR square.";
       } finally {
         event.target.value = "";
       }
@@ -1299,7 +1340,7 @@
 
             parsedData = {
               uid: refId.length >= 12 ? refId.slice(0, 12).replace(/[^0-9]/g, "") : "",
-              last4Digits: refId.length >= 4 ? refId.slice(0, 4).replace(/[^0-9]/g, "") : "",
+              hasPartialRef: refId.length >= 4,
               name: name,
               careOf: careOf,
               gender: gender,
@@ -1349,14 +1390,14 @@
         }
 
         const feedback = document.getElementById("refillFeedback");
-        const maskNote = (!parsedData.uid || parsedData.uid.length < 12) && parsedData.last4Digits
-          ? " (Please type full 12-digit Aadhaar if required)"
+        const maskNote = (!parsedData.uid || parsedData.uid.length < 12) && parsedData.hasPartialRef
+          ? " (Please type full 12-digit ID if required)"
           : "";
         feedback.innerText = `✓ Aadhaar QR Scanned Successfully for "${parsedData.name}"!${maskNote}`;
         feedback.classList.remove("hidden");
       } else {
         if (statusMsg) {
-          statusMsg.innerText = `QR detected, but not an Aadhaar format (${trimmed.slice(0, 30)}...). Make sure you scan the large Aadhaar QR code.`;
+          statusMsg.innerText = "QR detected, but not an Aadhaar format. Make sure you scan the large Aadhaar QR code.";
         }
       }
     }
