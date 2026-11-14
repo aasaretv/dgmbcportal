@@ -528,29 +528,31 @@
           </div>
         </div>
 
-        <!-- Faith & Health Questionnaire -->
+        <!-- Faith & Health Questionnaire (Conditional Enable/Disable for Details & From When) -->
         <div class="bg-slate-850 p-2.5 rounded-lg border border-slate-800 space-y-2.5">
           <h4 class="font-bold text-amber-400 text-xs uppercase tracking-wider">Health & Faith Questions</h4>
           
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
             <span class="sm:col-span-2 text-[11px] sm:text-xs">ನಿಮಗೆ ಯಾವುದಾದರೂ ಕಾಯಿಲೆ ಇದೆಯಾ? / Suffering from any disease?</span>
             <div class="flex items-center space-x-1.5">
-              <select id="hasDisease" class="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs shrink-0">
+              <select id="hasDisease" onchange="toggleHealthFields()" class="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs shrink-0 focus:border-amber-400 focus:outline-none">
                 <option value="No">ಇಲ್ಲ / No</option>
                 <option value="Yes">ಹೌದು / Yes</option>
               </select>
-              <input type="text" id="diseaseDetails" placeholder="ಹೌದಾದರೆ ಯಾವುದು? / Details" class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-xs">
+              <input type="text" id="diseaseDetails" disabled placeholder="ಹೌದಾದರೆ ಯಾವುದು? / Details"
+                class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-xs focus:border-amber-400 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-slate-900">
             </div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
             <span class="sm:col-span-2 text-[11px] sm:text-xs">ನೀವು ಚಿಕಿತ್ಸೆಯನ್ನು ಪಡೆಯುತ್ತಿದ್ದೀರಾ? / Taking treatment?</span>
             <div class="flex items-center space-x-1.5">
-              <select id="takingTreatment" class="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs shrink-0">
+              <select id="takingTreatment" onchange="toggleHealthFields()" class="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs shrink-0 focus:border-amber-400 focus:outline-none">
                 <option value="No">ಇಲ್ಲ / No</option>
                 <option value="Yes">ಹೌದು / Yes</option>
               </select>
-              <input type="text" id="treatmentDuration" placeholder="ಯಾವಾಗಲಿಂದ? / From when?" class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-xs">
+              <input type="text" id="treatmentDuration" disabled placeholder="ಯಾವಾಗಲಿಂದ? / From when?"
+                class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-xs focus:border-amber-400 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-slate-900">
             </div>
           </div>
 
@@ -854,8 +856,34 @@
       refreshAllLogos();
       checkAuthLock();
       initTodaysDate();
+      toggleHealthFields();
       processOfflineQueue().then(() => syncDataFromSheet());
     });
+
+    // Enable/Disable Disease Details and Treatment Duration inputs based on Yes/No selection
+    function toggleHealthFields() {
+      const hasDisSelect = document.getElementById("hasDisease");
+      const disDetailsInput = document.getElementById("diseaseDetails");
+      if (hasDisSelect && disDetailsInput) {
+        if (hasDisSelect.value === "Yes") {
+          disDetailsInput.disabled = false;
+        } else {
+          disDetailsInput.value = "";
+          disDetailsInput.disabled = true;
+        }
+      }
+
+      const takingTrtSelect = document.getElementById("takingTreatment");
+      const trtDurationInput = document.getElementById("treatmentDuration");
+      if (takingTrtSelect && trtDurationInput) {
+        if (takingTrtSelect.value === "Yes") {
+          trtDurationInput.disabled = false;
+        } else {
+          trtDurationInput.value = "";
+          trtDurationInput.disabled = true;
+        }
+      }
+    }
 
     // Automatically upload any waiting offline entries as soon as internet reconnects
     window.addEventListener('online', async () => {
@@ -1024,7 +1052,6 @@
       document.getElementById("aadhaarQrModal").classList.add("hidden");
     }
 
-    // Helper: Load an uploaded image file into an HTMLImageElement
     function loadFileAsImage(file) {
       return new Promise((resolve, reject) => {
         const url = URL.createObjectURL(file);
@@ -1041,7 +1068,6 @@
       });
     }
 
-    // Helper: Try decoding a specific crop region of an image using jsQR & BarcodeDetector
     async function tryDecodeCanvasRegion(img, sx, sy, sw, sh, targetScale = 1, applyContrast = false) {
       const canvas = document.createElement("canvas");
       const w = Math.min(2400, Math.max(600, Math.round(sw * targetScale)));
@@ -1087,7 +1113,6 @@
       return null;
     }
 
-    // Desktop + Mobile Multi-Region Aadhaar Image Scanner
     async function scanAadhaarQrFromFile(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -1325,7 +1350,7 @@
 
         const feedback = document.getElementById("refillFeedback");
         const maskNote = (!parsedData.uid || parsedData.uid.length < 12) && parsedData.last4Digits
-          ? ` (Card ends in ${parsedData.last4Digits} — type full 12-digit Aadhaar if required)`
+          ? " (Please type full 12-digit Aadhaar if required)"
           : "";
         feedback.innerText = `✓ Aadhaar QR Scanned Successfully for "${parsedData.name}"!${maskNote}`;
         feedback.classList.remove("hidden");
@@ -1910,14 +1935,20 @@
       if (hk) document.getElementById("howKnowInput").value = hk;
       const purp = getSheetField(record, 'purpose');
       if (purp) document.getElementById("purposeInput").value = purp;
+
       const hd = getSheetField(record, 'hasDisease');
-      if (hd) document.getElementById("hasDisease").value = hd;
+      document.getElementById("hasDisease").value = (hd && hd.toLowerCase() === "yes") ? "Yes" : "No";
       const dd = getSheetField(record, 'diseaseDetails');
-      if (dd) document.getElementById("diseaseDetails").value = dd;
+      document.getElementById("diseaseDetails").value = dd || "";
+
       const tt = getSheetField(record, 'takingTreatment');
-      if (tt) document.getElementById("takingTreatment").value = tt;
+      document.getElementById("takingTreatment").value = (tt && tt.toLowerCase() === "yes") ? "Yes" : "No";
       const td = getSheetField(record, 'treatmentDuration');
-      if (td) document.getElementById("treatmentDuration").value = td;
+      document.getElementById("treatmentDuration").value = td || "";
+
+      // Sync enabled/disabled state with populated Yes/No values
+      toggleHealthFields();
+
       const ti = getSheetField(record, 'treatmentImprovement');
       if (ti) document.getElementById("treatmentImprovement").value = ti;
       const bh = getSheetField(record, 'believeHealing');
@@ -2070,6 +2101,12 @@
       const occClean = document.getElementById("occupationInput").value.trim();
       const formattedEntryDate = parseDateToDDMMYYYY(dt);
 
+      const hasDisVal = document.getElementById("hasDisease").value;
+      const disDetailsVal = hasDisVal === "Yes" ? document.getElementById("diseaseDetails").value.trim() : "";
+
+      const takingTrtVal = document.getElementById("takingTreatment").value;
+      const trtDurationVal = takingTrtVal === "Yes" ? document.getElementById("treatmentDuration").value.trim() : "";
+
       const recordUniqueId = (isEditingMode && editingRecordId)
         ? editingRecordId
         : 'DGM_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
@@ -2112,10 +2149,10 @@
         visitors: visitors,
         howKnow: document.getElementById("howKnowInput").value.trim(),
         purpose: document.getElementById("purposeInput").value.trim(),
-        hasDisease: document.getElementById("hasDisease").value,
-        diseaseDetails: document.getElementById("diseaseDetails").value.trim(),
-        takingTreatment: document.getElementById("takingTreatment").value,
-        treatmentDuration: document.getElementById("treatmentDuration").value.trim(),
+        hasDisease: hasDisVal,
+        diseaseDetails: disDetailsVal,
+        takingTreatment: takingTrtVal,
+        treatmentDuration: trtDurationVal,
         treatmentImprovement: document.getElementById("treatmentImprovement").value,
         believeHealing: document.getElementById("believeHealing").value,
         ownInterest: document.getElementById("ownInterest").value,
@@ -2532,11 +2569,11 @@
 
       const hasDis = getSheetField(rec, 'hasDisease') || 'No';
       const disDet = getSheetField(rec, 'diseaseDetails');
-      document.getElementById("pDisease").innerText = `${hasDis} ${disDet ? '(' + disDet + ')' : ''}`;
+      document.getElementById("pDisease").innerText = (hasDis === 'Yes' && disDet) ? `${hasDis} (${disDet})` : hasDis;
 
       const takTrt = getSheetField(rec, 'takingTreatment') || 'No';
       const trtDur = getSheetField(rec, 'treatmentDuration');
-      document.getElementById("pTreatment").innerText = `${takTrt} ${trtDur ? '(' + trtDur + ')' : ''}`;
+      document.getElementById("pTreatment").innerText = (takTrt === 'Yes' && trtDur) ? `${takTrt} (${trtDur})` : takTrt;
 
       document.getElementById("pImprovement").innerText = getSheetField(rec, 'treatmentImprovement') || 'No';
       document.getElementById("pHealing").innerText = getSheetField(rec, 'believeHealing') || 'Yes';
@@ -2616,6 +2653,12 @@
       const occVal = document.getElementById("occupationInput").value.trim();
       const fullReg = buildRegistrationNumber(dt, manualSeqVal);
 
+      const hasDisVal = document.getElementById("hasDisease").value;
+      const disDetailsVal = hasDisVal === "Yes" ? document.getElementById("diseaseDetails").value.trim() : "";
+
+      const takingTrtVal = document.getElementById("takingTreatment").value;
+      const trtDurationVal = takingTrtVal === "Yes" ? document.getElementById("treatmentDuration").value.trim() : "";
+
       const tempRec = {
         regNo: fullReg,
         "Reg No.": fullReg,
@@ -2641,10 +2684,10 @@
         visitors: collectVisitorsFromForm(),
         howKnow: document.getElementById("howKnowInput").value.trim() || "-",
         purpose: document.getElementById("purposeInput").value.trim() || "-",
-        hasDisease: document.getElementById("hasDisease").value,
-        diseaseDetails: document.getElementById("diseaseDetails").value.trim(),
-        takingTreatment: document.getElementById("takingTreatment").value,
-        treatmentDuration: document.getElementById("treatmentDuration").value.trim(),
+        hasDisease: hasDisVal,
+        diseaseDetails: disDetailsVal,
+        takingTreatment: takingTrtVal,
+        treatmentDuration: trtDurationVal,
         treatmentImprovement: document.getElementById("treatmentImprovement").value,
         believeHealing: document.getElementById("believeHealing").value,
         ownInterest: document.getElementById("ownInterest").value,
@@ -2740,7 +2783,7 @@
       promptShareModal(title, text);
     }
 
-    // Opens New Entry with a BLANK Reg No. input for 100% manual typing
+    // Opens New Entry with a BLANK Reg No. input and disabled health detail fields by default
     async function openNewEntryModal() {
       isEditingMode = false;
       editingRecordId = null;
@@ -2749,6 +2792,7 @@
       document.getElementById("stateInput").value = "Karnataka";
       initTodaysDate();
       document.getElementById("manualSeqInput").value = "";
+      toggleHealthFields();
       updateRegNoPreview();
       removePhoto();
       document.getElementById("refillFeedback").classList.add("hidden");
