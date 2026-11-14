@@ -330,12 +330,12 @@
             <input type="date" id="entryDate" required onchange="handleDateChange()" class="w-full sm:w-auto bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-slate-100 text-xs focus:border-amber-400 focus:outline-none">
           </div>
           
-          <!-- MANUAL REGISTRATION NUMBER (1 to 800) WITH DUPLICATE CHECK -->
-          <div class="space-y-1 w-full sm:w-52">
-            <label class="block font-medium text-amber-400 text-[11px]">Reg No. (1 to 800): <span class="text-red-400">*</span></label>
-            <input type="number" id="manualSeqInput" min="1" max="800" required placeholder="Enter 1 - 800" oninput="handleRegSeqChange(this)"
+          <!-- STRICTLY MANUAL REGISTRATION NUMBER (1 to 800) WITH DUPLICATE CHECK -->
+          <div class="space-y-1 w-full sm:w-56">
+            <label class="block font-medium text-amber-400 text-[11px]">Reg No. (Type 1 to 800): <span class="text-red-400">*</span></label>
+            <input type="number" id="manualSeqInput" min="1" max="800" required placeholder="Type Reg No. (1 - 800)" oninput="handleRegSeqChange(this)"
               class="w-full bg-slate-800 border border-amber-500/60 rounded px-2.5 py-1.5 text-amber-300 font-mono font-bold text-xs focus:border-amber-400 focus:outline-none">
-            <p id="dupRegError" class="text-[10px] text-red-400 font-semibold hidden"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Already used on this date!</p>
+            <p id="dupRegError" class="text-[10px] text-red-400 font-semibold hidden"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Already saved on this date! Enter a different number.</p>
           </div>
 
           <div class="text-left sm:text-right">
@@ -841,6 +841,9 @@
     let qrVideoStream = null;
     let qrScanInterval = null;
 
+    // Session-level map of saved IDs -> RegNo so Google Sheet sync delays never alter a newly saved Reg No.
+    const verifiedRegNoMap = new Map();
+
     let pendingShareData = { title: "", text: "", url: "" };
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -893,7 +896,7 @@
       });
     }
 
-    // ================= UPGRADED AADHAAR QR CODE SCANNER & PARSER (SUPPORTS V1, V2, XML & HD CAMERA) =================
+    // ================= UPGRADED AADHAAR QR CODE SCANNER & PARSER =================
     async function openAadhaarQrScanner() {
       stopCamera();
       document.getElementById("aadhaarQrModal").classList.remove("hidden");
@@ -906,7 +909,6 @@
         return;
       }
 
-      // 1. Try Native Hardware BarcodeDetector + 1080p Stream first (Best for dense Aadhaar QR on Android/Chrome)
       if ('BarcodeDetector' in window) {
         try {
           qrVideoStream = await navigator.mediaDevices.getUserMedia({
@@ -942,7 +944,6 @@
         }
       }
 
-      // 2. Fallback to Html5Qrcode with HD resolution constraints
       setTimeout(async () => {
         try {
           if (html5QrScanner) {
@@ -1022,7 +1023,6 @@
       document.getElementById("aadhaarQrModal").classList.add("hidden");
     }
 
-    // Multi-Engine Image File Scanner (Uses Native BarcodeDetector + Multi-Scale Html5Qrcode)
     async function scanAadhaarQrFromFile(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -1030,7 +1030,6 @@
       statusMsg.innerText = "Analyzing image for Aadhaar QR code...";
 
       try {
-        // Method A: Try Native BarcodeDetector on the image bitmap first (handles high-density QR best)
         if ('BarcodeDetector' in window) {
           try {
             const bitmap = await createImageBitmap(file);
@@ -1045,7 +1044,6 @@
           }
         }
 
-        // Method B: Try Html5Qrcode directly on the file
         if (html5QrScanner) {
           await html5QrScanner.stop().catch(() => {});
         } else {
@@ -1060,7 +1058,6 @@
       }
     }
 
-    // BigInt decimal string to byte array converter for UIDAI Secure QR
     function bigIntStringToBytes(decStr) {
       let big = BigInt(decStr);
       const bytes = [];
@@ -1077,7 +1074,6 @@
       const statusMsg = document.getElementById("qrStatusMsg");
       let parsedData = null;
 
-      // ================= FORMAT 1: XML / PRINT LETTER QR CODE =================
       if (trimmed.includes("PrintLetterBarcodeData") || trimmed.includes("uid=") || trimmed.startsWith("<")) {
         try {
           const getXmlAttr = (attrList) => {
@@ -1112,7 +1108,6 @@
         }
       }
 
-      // ================= FORMAT 2: UIDAI SECURE QR CODE (V1 & V2 GZIP NUMERIC) =================
       if (!parsedData || (!parsedData.name && !parsedData.pincode)) {
         const bigNumMatch = trimmed.match(/\d{100,}/);
         if (bigNumMatch && typeof pako !== "undefined") {
@@ -1125,7 +1120,6 @@
               decompressed = pako.ungzip(compressedBytes);
             }
 
-            // Split byte array by delimiter 255 (0xFF) using ISO-8859-1 decoding per UIDAI specification
             const fields = [];
             let start = 0;
             const decoder = new TextDecoder("iso-8859-1");
@@ -1137,7 +1131,6 @@
               }
             }
 
-            // Detect Version 2 prefix ("V2" at fields[0]) vs Version 1
             let offset = 0;
             if (fields[0] && (fields[0].toUpperCase().startsWith("V") || fields[0].length <= 2)) {
               offset = 1;
@@ -1185,7 +1178,6 @@
         }
       }
 
-      // ================= POPULATE FORM FIELDS =================
       if (parsedData && (parsedData.name || parsedData.pincode)) {
         closeAadhaarQrScanner();
 
@@ -1231,7 +1223,6 @@
       }
     }
 
-    // Helper to collect all 5 visitors along with their respective diseases
     function collectVisitorsFromForm() {
       const list = [];
       for (let i = 1; i <= 5; i++) {
@@ -1248,7 +1239,7 @@
       return list;
     }
 
-    // Universal Field Extractor
+    // Universal Field Extractor (Strict key matching so Reg No. is never confused with regDate)
     function getSheetField(rec, type) {
       if (!rec || typeof rec !== "object") return "";
       const keyMap = {
@@ -1257,6 +1248,7 @@
         occupation: ["occupation", "Occupation", "OCCUPATION", "job", "Job", "profession", "ಉದ್ಯೋಗ"],
         address: ["address", "Address", "ADDRESS", "Full Address", "full address"],
         regNo: ["regNo", "Reg No.", "Reg No", "RegNo", "reg_no", "Registration Number", "Registration No", "Reg. No."],
+        regSeq: ["regSeq", "RegSeq", "reg_seq", "Seq", "seq"],
         city: ["city", "City", "CITY", "place", "Place", "town", "Town", "village", "Village", "taluk", "Taluk", "ಊರು", "ನಗರ"],
         district: ["district", "District", "DISTRICT", "dist", "Dist", "ಜಿಲ್ಲೆ"],
         state: ["state", "State", "STATE", "ರಾಜ್ಯ"],
@@ -1304,9 +1296,10 @@
       const nonEmptyValues = values.filter(v => v !== "" && v !== null && v !== undefined);
       if (nonEmptyValues.length === 0) return null;
 
-      function findByPartialKey(searchTerms) {
+      function findByPartialKey(searchTerms, excludeTerms = []) {
         for (const k of keys) {
           const cleanK = String(k).trim().toLowerCase();
+          if (excludeTerms.some(ex => cleanK.includes(ex))) continue;
           for (const term of searchTerms) {
             if (cleanK === term || cleanK.includes(term)) {
               const val = rawRow[k];
@@ -1321,10 +1314,12 @@
 
       const norm = { ...rawRow };
 
-      norm.name = getSheetField(rawRow, 'name') || findByPartialKey(["name", "ಹೆಸರು", "visitor", "applicant", "person"]);
+      norm.name = getSheetField(rawRow, 'name') || findByPartialKey(["name", "ಹೆಸರು", "visitor", "applicant", "person"], ["relative", "father", "husband"]);
       norm.mobile = getSheetField(rawRow, 'mobile') || findByPartialKey(["mobile", "phone", "contact", "cell", "ಮೊಬೈಲ್"]);
       norm.aadhaar = getSheetField(rawRow, 'aadhaar') || findByPartialKey(["aadhaar", "aadhar", "ಆಧಾರ್", "uid"]);
-      norm.regNo = getSheetField(rawRow, 'regNo') || findByPartialKey(["reg", "registration", "serial", "sl"]);
+      // Never match regDate when looking for regNo
+      norm.regNo = getSheetField(rawRow, 'regNo') || findByPartialKey(["reg no", "regno", "registration", "ನೋಂದಣಿ"], ["date", "time"]);
+      norm.regSeq = getSheetField(rawRow, 'regSeq');
       norm.relativeName = getSheetField(rawRow, 'relativeName') || findByPartialKey(["relative", "father", "husband", "ತಂದೆ", "ಗಂಡ"]);
       norm.occupation = getSheetField(rawRow, 'occupation') || findByPartialKey(["occupation", "job", "profession", "ಉದ್ಯೋಗ"]);
       norm.address = getSheetField(rawRow, 'address') || findByPartialKey(["address", "street", "ವಿಳಾಸ"]);
@@ -1334,6 +1329,12 @@
       norm.pincode = getSheetField(rawRow, 'pincode') || findByPartialKey(["pin", "zip", "ಕೋಡ್"]);
       norm.declarationLang = getSheetField(rawRow, 'declarationLang') || findByPartialKey(["decl", "lang", "ಭಾಷೆ"]);
       norm.photo = getSheetField(rawRow, 'photo') || findByPartialKey(["photo", "img", "image", "pic"]);
+
+      // Scan values for explicit "dgmbc/dd/mm/yyyy/No" pattern if header was unnamed
+      if (!norm.regNo) {
+        const foundReg = nonEmptyValues.find(v => /^dgmbc\/\d{1,2}\/\d{1,2}\/\d{4}\/\d+/i.test(String(v).trim()));
+        if (foundReg) norm.regNo = String(foundReg).trim();
+      }
 
       if (!norm.photo) {
         const foundImg = nonEmptyValues.find(v => String(v).trim().startsWith("data:image/"));
@@ -1360,40 +1361,77 @@
       }
 
       if (!norm.id) norm.id = rawRow.ID || `SHEET_ROW_${index + 1}`;
+
+      // If this record was just saved in this session, guarantee its exact Reg No is preserved
+      if (verifiedRegNoMap.has(String(norm.id))) {
+        norm.regNo = verifiedRegNoMap.get(String(norm.id));
+      }
+
       return norm;
     }
 
     function getFullRegNoFromRecord(rec) {
       if (!rec) return "-";
+      const recId = String(rec.id || rec.ID || "");
+      if (recId && verifiedRegNoMap.has(recId)) {
+        return verifiedRegNoMap.get(recId);
+      }
+
       const storedReg = getSheetField(rec, 'regNo');
-      const seqField = rec.regSeq || rec["Reg No."] || rec["Reg No"];
+      const seqField = getSheetField(rec, 'regSeq');
 
       if (storedReg) {
-        if (!isNaN(storedReg) && !storedReg.includes('/')) {
+        // If storedReg is just a number like "15", format it with the record's date
+        if (/^\d+$/.test(storedReg)) {
           const dStr = extractRecordDate(rec);
           return `dgmbc/${dStr}/${storedReg}`;
         }
-        if (storedReg.endsWith('/') && seqField && !isNaN(seqField)) {
+        // If storedReg ended with a slash ("dgmbc/14/11/2026/") and regSeq has the number, combine them
+        if (storedReg.endsWith('/') && seqField && /^\d+$/.test(seqField)) {
           return `${storedReg}${seqField}`;
         }
         return storedReg;
       }
-      return buildRegistrationNumber(extractRecordDate(rec), seqField || "");
+
+      if (seqField && /^\d+$/.test(seqField)) {
+        return buildRegistrationNumber(extractRecordDate(rec), seqField);
+      }
+      return buildRegistrationNumber(extractRecordDate(rec), "");
     }
 
-    // Check if a Registration Number (dgmbc/dd/mm/yyyy/No) is already used on the same date
-    function isRegNumberDuplicateForDate(dateStr, seqNum) {
-      if (!seqNum || isNaN(seqNum)) return false;
-      const targetFullReg = buildRegistrationNumber(dateStr, seqNum).toLowerCase();
+    // Extract the numeric sequence part from a record's Registration Number
+    function extractSequenceNumberFromRecord(rec) {
+      const fullReg = getFullRegNoFromRecord(rec);
+      const parts = String(fullReg).split('/');
+      if (parts.length >= 5 && /^\d+$/.test(parts[4].trim())) {
+        return parseInt(parts[4].trim(), 10);
+      }
+      const seqField = getSheetField(rec, 'regSeq');
+      if (seqField && /^\d+$/.test(seqField)) {
+        return parseInt(seqField, 10);
+      }
+      return null;
+    }
 
-      return churchEntries.some(rec => {
+    // Check if a Registration Number (1-800) is already saved on the same date
+    function findDuplicateRecordForDate(dateStr, seqNum) {
+      if (!seqNum || isNaN(seqNum)) return null;
+      const targetSeq = parseInt(seqNum, 10);
+      const targetDateDDMMYYYY = parseDateToDDMMYYYY(dateStr);
+
+      return churchEntries.find(rec => {
         const recId = String(rec.id || rec.ID || "");
         if (isEditingMode && editingRecordId && recId === String(editingRecordId)) {
-          return false;
+          return false; // Allow keeping the same number when editing that exact record
         }
-        const existingFullReg = getFullRegNoFromRecord(rec).toLowerCase();
-        return existingFullReg === targetFullReg;
-      });
+        const recDate = extractRecordDate(rec);
+        const recSeq = extractSequenceNumberFromRecord(rec);
+        return recDate === targetDateDDMMYYYY && recSeq === targetSeq;
+      }) || null;
+    }
+
+    function isRegNumberDuplicateForDate(dateStr, seqNum) {
+      return Boolean(findDuplicateRecordForDate(dateStr, seqNum));
     }
 
     async function forceManualSync() {
@@ -1405,7 +1443,6 @@
       if (icon) icon.classList.remove("fa-spin");
     }
 
-    // Delete Record Function (Deletes directly from Google Sheet and reloads Sheet data)
     async function deleteRecord(rec) {
       if (!rec) return;
       const nameStr = getSheetField(rec, 'name') || 'this visitor';
@@ -1436,6 +1473,7 @@
         });
         const json = await res.json();
         if (json.action === "deleted" || json.deleted === true || json.status === "success") {
+          verifiedRegNoMap.delete(String(recId));
           await syncDataFromSheet();
           handleSearch();
         } else {
@@ -1509,10 +1547,8 @@
       updateRegNoPreview();
     }
 
+    // Do NOT auto-fill Reg No when changing date; keep manual input and re-validate duplicate check
     function handleDateChange() {
-      if (!isEditingMode) {
-        document.getElementById("manualSeqInput").value = getNextDefaultSeq();
-      }
       updateRegNoPreview();
     }
 
@@ -1523,6 +1559,8 @@
         if (num > 800) num = 800;
         if (num < 1) num = 1;
         inputEl.value = num;
+      } else {
+        inputEl.value = "";
       }
       updateRegNoPreview();
     }
@@ -1537,8 +1575,13 @@
 
       displayEl.innerText = fullPreview;
 
-      if (manualVal && isRegNumberDuplicateForDate(dt, manualVal)) {
-        if (dupErrEl) dupErrEl.classList.remove("hidden");
+      const conflictRec = manualVal ? findDuplicateRecordForDate(dt, manualVal) : null;
+      if (conflictRec) {
+        const existingName = getSheetField(conflictRec, 'name') || "another visitor";
+        if (dupErrEl) {
+          dupErrEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i>Reg No. ${manualVal} is already saved on this date (for ${existingName})!`;
+          dupErrEl.classList.remove("hidden");
+        }
         if (seqInputEl) seqInputEl.classList.add("border-red-500", "text-red-400");
         displayEl.className = "font-mono text-xs font-bold text-red-400 line-through";
       } else {
@@ -1681,7 +1724,7 @@
         isEditingMode = false;
         editingRecordId = null;
 
-        feedback.innerText = `✓ Found ${matches.length} previous visit(s) in Google Sheet for "${getSheetField(latestMatch, 'name')}". Details auto-filled! Saving will create a NEW record.`;
+        feedback.innerText = `✓ Found ${matches.length} previous visit(s) in Google Sheet for "${getSheetField(latestMatch, 'name')}". Details auto-filled! Please type today's Reg No.`;
         feedback.classList.remove("hidden");
         populateFormFields(latestMatch, false);
       } else {
@@ -1726,13 +1769,11 @@
         document.getElementById("mobileInput").value = mobileVal;
       }
 
+      // Only fill Reg No when explicitly editing an existing record; never overwrite manual input during auto-refill
       if (isEdit) {
-        const fullReg = getFullRegNoFromRecord(record);
-        const parts = String(fullReg).split('/');
-        if (parts.length >= 5 && parts[4] !== "") {
-          document.getElementById("manualSeqInput").value = parts[4];
-        } else if (record.regSeq) {
-          document.getElementById("manualSeqInput").value = record.regSeq;
+        const seqNum = extractSequenceNumberFromRecord(record);
+        if (seqNum !== null) {
+          document.getElementById("manualSeqInput").value = seqNum;
         }
       }
 
@@ -1882,16 +1923,19 @@
       const manualSeqVal = document.getElementById("manualSeqInput").value.trim();
 
       if (!manualSeqVal || isNaN(manualSeqVal) || parseInt(manualSeqVal, 10) < 1 || parseInt(manualSeqVal, 10) > 800) {
-        alert("Please enter a valid Registration Number between 1 and 800.");
+        alert("Please manually type a valid Registration Number between 1 and 800.");
         document.getElementById("manualSeqInput").focus();
         return;
       }
 
-      const fullRegNo = buildRegistrationNumber(dt, manualSeqVal);
+      const cleanSeqNum = String(parseInt(manualSeqVal, 10));
+      const fullRegNo = buildRegistrationNumber(dt, cleanSeqNum);
 
-      // Block duplicate Reg No for the same date
-      if (isRegNumberDuplicateForDate(dt, manualSeqVal)) {
-        alert(`Duplicate Registration Number!\n\n"${fullRegNo}" is already registered for this date (${parseDateToDDMMYYYY(dt)}).\nPlease enter a different Registration Number.`);
+      // Prompt and block if the same Registration Number is already saved for the same date
+      const duplicateRec = findDuplicateRecordForDate(dt, cleanSeqNum);
+      if (duplicateRec) {
+        const dupName = getSheetField(duplicateRec, 'name') || "another visitor";
+        alert(`Duplicate Registration Number Alert!\n\nReg No. "${cleanSeqNum}" (${fullRegNo}) is already saved on ${parseDateToDDMMYYYY(dt)} for "${dupName}".\n\nPlease enter a different Registration Number.`);
         document.getElementById("manualSeqInput").focus();
         return;
       }
@@ -1927,13 +1971,16 @@
         ? editingRecordId
         : 'DGM_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
 
+      // Lock the exact manually typed Reg No in memory for this ID
+      verifiedRegNoMap.set(String(recordUniqueId), fullRegNo);
+
       const entry = {
         id: recordUniqueId,
         isEdit: isEditingMode,
         regNo: fullRegNo,
         "Reg No.": fullRegNo,
         "Reg No": fullRegNo,
-        regSeq: manualSeqVal,
+        regSeq: cleanSeqNum,
         regDate: dt,
         date: dt,
         Date: formattedEntryDate,
@@ -1985,6 +2032,7 @@
         });
         const json = await res.json();
         if (json.status === "duplicate_error") {
+          verifiedRegNoMap.delete(String(recordUniqueId));
           alert(json.message);
           document.getElementById("manualSeqInput").focus();
           return;
@@ -1992,8 +2040,14 @@
         if (json.status !== "success" && json.result !== "success") {
           throw new Error(json.message || "Server error");
         }
-        
-        alert(isEditingMode ? `✓ Record updated in Google Sheet (${fullRegNo})!` : `✓ New Record Saved to Google Sheet!\nReg No: ${fullRegNo}\nDate: ${formattedEntryDate}`);
+
+        const confirmedRegNo = json.savedRegNo || fullRegNo;
+        verifiedRegNoMap.set(String(recordUniqueId), confirmedRegNo);
+
+        alert(isEditingMode
+          ? `✓ Record Updated Successfully!\nReg No: ${confirmedRegNo}\nDate: ${formattedEntryDate}`
+          : `✓ New Record Saved to Google Sheet!\nReg No: ${confirmedRegNo}\nDate: ${formattedEntryDate}`);
+
         isEditingMode = false;
         editingRecordId = null;
         await syncDataFromSheet();
@@ -2584,42 +2638,24 @@
       promptShareModal(title, text);
     }
 
-    // Finds the next unused Registration Number (1-800) specifically for the selected date
-    function getNextDefaultSeq() {
-      const dt = document.getElementById("entryDate")?.value || new Date().toISOString().split('T')[0];
-      const usedSet = new Set();
-
-      const normalized = normalizeToYMD(dt);
-      const parts = normalized.split('-');
-      const prefix = `dgmbc/${(parts[2] || "01").padStart(2, '0')}/${(parts[1] || "01").padStart(2, '0')}/${parts[0]}/`.toLowerCase();
-
-      churchEntries.forEach(r => {
-        const full = getFullRegNoFromRecord(r).toLowerCase();
-        if (full.startsWith(prefix)) {
-          const seqPart = full.slice(prefix.length);
-          const n = parseInt(seqPart, 10);
-          if (!isNaN(n)) usedSet.add(n);
-        }
-      });
-
-      for (let i = 1; i <= 800; i++) {
-        if (!usedSet.has(i)) return i;
-      }
-      return 1;
-    }
-
-    function openNewEntryModal() {
+    // Opens New Entry with a BLANK Reg No. input for 100% manual typing
+    async function openNewEntryModal() {
       isEditingMode = false;
       editingRecordId = null;
       document.getElementById("formModalTitle").innerText = "New Entry / ಹೊಸ ನೋಂದಣಿ";
       document.getElementById("registrationForm").reset();
       document.getElementById("stateInput").value = "Karnataka";
       initTodaysDate();
-      document.getElementById("manualSeqInput").value = getNextDefaultSeq();
+      // Keep Reg No blank so the user always types it manually
+      document.getElementById("manualSeqInput").value = "";
       updateRegNoPreview();
       removePhoto();
       document.getElementById("refillFeedback").classList.add("hidden");
       document.getElementById("registrationModal").classList.remove("hidden");
+
+      // Refresh sheet data in background so duplicate check is 100% up-to-date
+      await syncDataFromSheet();
+      updateRegNoPreview();
     }
 
     function closeNewEntryModal() {
