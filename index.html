@@ -10,8 +10,9 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- html2pdf.js for client-side PDF export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <!-- html5-qrcode & pako for Aadhaar QR Code Scanning & Decompression -->
+  <!-- html5-qrcode, jsQR & pako for Desktop + Mobile Aadhaar QR Code Scanning & Decompression -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
 
   <style>
@@ -174,7 +175,7 @@
         </button>
       </div>
 
-      <p class="text-[11px] text-slate-300 text-center">Point your camera closely at the large QR code on the Aadhaar card, or tap below to snap/upload a close-up photo of the QR square.</p>
+      <p class="text-[11px] text-slate-300 text-center">Point your camera closely at the large QR code on the Aadhaar card, or click below to upload a photo/cropped image of the QR code.</p>
 
       <div id="qrReaderBox" class="w-full bg-black rounded-xl overflow-hidden border border-slate-700 min-h-[240px] flex items-center justify-center"></div>
 
@@ -182,8 +183,8 @@
 
       <div class="w-full flex items-center justify-between gap-2 pt-1">
         <label class="flex-1 py-2 px-3 bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/40 rounded-lg text-xs font-semibold text-center cursor-pointer transition">
-          <i class="fa-solid fa-camera mr-1"></i> Take / Upload QR Photo
-          <input type="file" id="qrImageFileInput" accept="image/*" capture="environment" class="hidden" onchange="scanAadhaarQrFromFile(event)">
+          <i class="fa-solid fa-file-arrow-up mr-1"></i> Upload Aadhaar / QR Image
+          <input type="file" id="qrImageFileInput" accept="image/*" class="hidden" onchange="scanAadhaarQrFromFile(event)">
         </label>
         <button type="button" onclick="closeAadhaarQrScanner()" class="py-2 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold">
           Cancel
@@ -896,7 +897,7 @@
       });
     }
 
-    // ================= UPGRADED AADHAAR QR CODE SCANNER & PARSER =================
+    // ================= UPGRADED DESKTOP + MOBILE AADHAAR QR CODE SCANNER & PARSER =================
     async function openAadhaarQrScanner() {
       stopCamera();
       document.getElementById("aadhaarQrModal").classList.remove("hidden");
@@ -905,7 +906,7 @@
       statusMsg.innerText = "Starting High-Definition Camera...";
 
       if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-        statusMsg.innerText = "Live camera requires HTTPS. Tap 'Take / Upload QR Photo' below to scan!";
+        statusMsg.innerText = "Live camera requires HTTPS. Click 'Upload Aadhaar / QR Image' below to scan!";
         return;
       }
 
@@ -980,7 +981,7 @@
               (decodedText) => handleAadhaarQrDecoded(decodedText),
               () => {}
             );
-            statusMsg.innerText = "Hold the Aadhaar QR code steady in front of your webcam.";
+            statusMsg.innerText = "Hold the Aadhaar QR code steady in front of your webcam, or click 'Upload Aadhaar / QR Image' below.";
           } catch (errFront) {
             try {
               const devices = await Html5Qrcode.getCameras();
@@ -997,7 +998,7 @@
                 throw new Error("No camera found");
               }
             } catch (errFinal) {
-              statusMsg.innerText = "Camera unavailable. Tap 'Take / Upload QR Photo' below to scan.";
+              statusMsg.innerText = "Camera unavailable. Click 'Upload Aadhaar / QR Image' below to scan from file.";
             }
           }
         }
@@ -1023,36 +1024,148 @@
       document.getElementById("aadhaarQrModal").classList.add("hidden");
     }
 
+    // Helper: Load an uploaded image file into an HTMLImageElement
+    function loadFileAsImage(file) {
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          resolve(img);
+        };
+        img.onerror = (err) => {
+          URL.revokeObjectURL(url);
+          reject(err);
+        };
+        img.src = url;
+      });
+    }
+
+    // Helper: Try decoding a specific crop region of an image using jsQR & BarcodeDetector
+    async function tryDecodeCanvasRegion(img, sx, sy, sw, sh, targetScale = 1, applyContrast = false) {
+      const canvas = document.createElement("canvas");
+      const w = Math.min(2400, Math.max(600, Math.round(sw * targetScale)));
+      const h = Math.min(2400, Math.max(600, Math.round(sh * targetScale)));
+      canvas.width = w;
+      canvas.height = h;
+
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(0, 0, w, h);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
+
+      const imageData = ctx.getImageData(0, 0, w, h);
+
+      if (applyContrast) {
+        const d = imageData.data;
+        for (let i = 0; i < d.length; i += 4) {
+          const gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+          const val = gray < 135 ? 0 : 255;
+          d[i] = d[i + 1] = d[i + 2] = val;
+        }
+        ctx.putImageData(imageData, 0, 0);
+      }
+
+      if (typeof jsQR === "function") {
+        const code = jsQR(imageData.data, w, h, { inversionAttempts: "attemptBoth" });
+        if (code && code.data && code.data.trim().length > 20) {
+          return code.data;
+        }
+      }
+
+      if ('BarcodeDetector' in window) {
+        try {
+          const detector = new BarcodeDetector({ formats: ['qr_code'] });
+          const barcodes = await detector.detect(canvas);
+          if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
+            return barcodes[0].rawValue;
+          }
+        } catch (e) {}
+      }
+
+      return null;
+    }
+
+    // Desktop + Mobile Multi-Region Aadhaar Image Scanner
     async function scanAadhaarQrFromFile(event) {
       const file = event.target.files[0];
       if (!file) return;
+
       const statusMsg = document.getElementById("qrStatusMsg");
-      statusMsg.innerText = "Analyzing image for Aadhaar QR code...";
+      const readerBox = document.getElementById("qrReaderBox");
+      statusMsg.innerText = "Scanning image across multiple zoom regions...";
 
       try {
-        if ('BarcodeDetector' in window) {
-          try {
-            const bitmap = await createImageBitmap(file);
-            const detector = new BarcodeDetector({ formats: ['qr_code'] });
-            const barcodes = await detector.detect(bitmap);
-            if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
-              handleAadhaarQrDecoded(barcodes[0].rawValue);
-              return;
-            }
-          } catch (bdErr) {
-            console.warn("Native image detect fallback:", bdErr);
+        if (qrScanInterval) {
+          clearInterval(qrScanInterval);
+          qrScanInterval = null;
+        }
+        if (qrVideoStream) {
+          qrVideoStream.getTracks().forEach(t => t.stop());
+          qrVideoStream = null;
+        }
+        if (html5QrScanner) {
+          await html5QrScanner.stop().catch(() => {});
+        }
+
+        const img = await loadFileAsImage(file);
+        const W = img.naturalWidth || img.width;
+        const H = img.naturalHeight || img.height;
+
+        readerBox.innerHTML = `<img src="${img.src}" class="max-h-56 w-auto object-contain rounded-lg border border-amber-500/40 p-1">`;
+
+        const regions = [
+          [0, 0, W, H],
+          [W * 0.40, 0, W * 0.60, H * 0.65],
+          [W * 0.40, H * 0.35, W * 0.60, H * 0.65],
+          [0, 0, W * 0.60, H * 0.65],
+          [0, H * 0.35, W * 0.60, H * 0.65],
+          [W * 0.20, H * 0.15, W * 0.60, H * 0.70],
+          [W * 0.45, H * 0.05, W * 0.50, H * 0.50],
+          [W * 0.45, H * 0.45, W * 0.50, H * 0.50],
+          [W * 0.50, H * 0.20, W * 0.48, H * 0.60],
+          [0, H * 0.45, W, H * 0.55],
+          [0, 0, W, H * 0.55]
+        ];
+
+        for (const [sx, sy, sw, sh] of regions) {
+          const result = await tryDecodeCanvasRegion(img, sx, sy, sw, sh, 1.5, false);
+          if (result) {
+            handleAadhaarQrDecoded(result);
+            return;
           }
         }
 
-        if (html5QrScanner) {
-          await html5QrScanner.stop().catch(() => {});
-        } else {
-          html5QrScanner = new Html5Qrcode("qrReaderBox");
+        statusMsg.innerText = "Enhancing QR contrast & deep-scanning...";
+        for (const [sx, sy, sw, sh] of regions) {
+          const result = await tryDecodeCanvasRegion(img, sx, sy, sw, sh, 2.0, true);
+          if (result) {
+            handleAadhaarQrDecoded(result);
+            return;
+          }
         }
-        const decodedText = await html5QrScanner.scanFile(file, true);
-        handleAadhaarQrDecoded(decodedText);
+
+        const tempDiv = document.createElement("div");
+        tempDiv.id = "tempQrFileScanner";
+        tempDiv.style.display = "none";
+        document.body.appendChild(tempDiv);
+        const fileScanner = new Html5Qrcode("tempQrFileScanner");
+        try {
+          const decodedText = await fileScanner.scanFile(file, false);
+          document.body.removeChild(tempDiv);
+          if (decodedText) {
+            handleAadhaarQrDecoded(decodedText);
+            return;
+          }
+        } catch (e) {
+          document.body.removeChild(tempDiv);
+        }
+
+        statusMsg.innerText = "Could not read QR from full card photo. Tip: On desktop, use Snipping Tool (Win+Shift+S) to crop JUST the QR code square and upload that cropped image!";
       } catch (err) {
-        statusMsg.innerText = "Tip: Crop or take a close-up photo of JUST the QR code square (not the whole card) so the tiny dots are clear.";
+        console.error("Desktop QR File Scan Error:", err);
+        statusMsg.innerText = "Could not read QR code. Please crop just the QR square and try again.";
       } finally {
         event.target.value = "";
       }
@@ -1317,7 +1430,6 @@
       norm.name = getSheetField(rawRow, 'name') || findByPartialKey(["name", "ಹೆಸರು", "visitor", "applicant", "person"], ["relative", "father", "husband"]);
       norm.mobile = getSheetField(rawRow, 'mobile') || findByPartialKey(["mobile", "phone", "contact", "cell", "ಮೊಬೈಲ್"]);
       norm.aadhaar = getSheetField(rawRow, 'aadhaar') || findByPartialKey(["aadhaar", "aadhar", "ಆಧಾರ್", "uid"]);
-      // Never match regDate when looking for regNo
       norm.regNo = getSheetField(rawRow, 'regNo') || findByPartialKey(["reg no", "regno", "registration", "ನೋಂದಣಿ"], ["date", "time"]);
       norm.regSeq = getSheetField(rawRow, 'regSeq');
       norm.relativeName = getSheetField(rawRow, 'relativeName') || findByPartialKey(["relative", "father", "husband", "ತಂದೆ", "ಗಂಡ"]);
@@ -1330,7 +1442,6 @@
       norm.declarationLang = getSheetField(rawRow, 'declarationLang') || findByPartialKey(["decl", "lang", "ಭಾಷೆ"]);
       norm.photo = getSheetField(rawRow, 'photo') || findByPartialKey(["photo", "img", "image", "pic"]);
 
-      // Scan values for explicit "dgmbc/dd/mm/yyyy/No" pattern if header was unnamed
       if (!norm.regNo) {
         const foundReg = nonEmptyValues.find(v => /^dgmbc\/\d{1,2}\/\d{1,2}\/\d{4}\/\d+/i.test(String(v).trim()));
         if (foundReg) norm.regNo = String(foundReg).trim();
@@ -1362,7 +1473,6 @@
 
       if (!norm.id) norm.id = rawRow.ID || `SHEET_ROW_${index + 1}`;
 
-      // If this record was just saved in this session, guarantee its exact Reg No is preserved
       if (verifiedRegNoMap.has(String(norm.id))) {
         norm.regNo = verifiedRegNoMap.get(String(norm.id));
       }
@@ -1381,12 +1491,10 @@
       const seqField = getSheetField(rec, 'regSeq');
 
       if (storedReg) {
-        // If storedReg is just a number like "15", format it with the record's date
         if (/^\d+$/.test(storedReg)) {
           const dStr = extractRecordDate(rec);
           return `dgmbc/${dStr}/${storedReg}`;
         }
-        // If storedReg ended with a slash ("dgmbc/14/11/2026/") and regSeq has the number, combine them
         if (storedReg.endsWith('/') && seqField && /^\d+$/.test(seqField)) {
           return `${storedReg}${seqField}`;
         }
@@ -1399,7 +1507,6 @@
       return buildRegistrationNumber(extractRecordDate(rec), "");
     }
 
-    // Extract the numeric sequence part from a record's Registration Number
     function extractSequenceNumberFromRecord(rec) {
       const fullReg = getFullRegNoFromRecord(rec);
       const parts = String(fullReg).split('/');
@@ -1413,7 +1520,6 @@
       return null;
     }
 
-    // Check if a Registration Number (1-800) is already saved on the same date
     function findDuplicateRecordForDate(dateStr, seqNum) {
       if (!seqNum || isNaN(seqNum)) return null;
       const targetSeq = parseInt(seqNum, 10);
@@ -1422,7 +1528,7 @@
       return churchEntries.find(rec => {
         const recId = String(rec.id || rec.ID || "");
         if (isEditingMode && editingRecordId && recId === String(editingRecordId)) {
-          return false; // Allow keeping the same number when editing that exact record
+          return false;
         }
         const recDate = extractRecordDate(rec);
         const recSeq = extractSequenceNumberFromRecord(rec);
@@ -1547,7 +1653,6 @@
       updateRegNoPreview();
     }
 
-    // Do NOT auto-fill Reg No when changing date; keep manual input and re-validate duplicate check
     function handleDateChange() {
       updateRegNoPreview();
     }
@@ -1769,7 +1874,6 @@
         document.getElementById("mobileInput").value = mobileVal;
       }
 
-      // Only fill Reg No when explicitly editing an existing record; never overwrite manual input during auto-refill
       if (isEdit) {
         const seqNum = extractSequenceNumberFromRecord(record);
         if (seqNum !== null) {
@@ -1931,7 +2035,6 @@
       const cleanSeqNum = String(parseInt(manualSeqVal, 10));
       const fullRegNo = buildRegistrationNumber(dt, cleanSeqNum);
 
-      // Prompt and block if the same Registration Number is already saved for the same date
       const duplicateRec = findDuplicateRecordForDate(dt, cleanSeqNum);
       if (duplicateRec) {
         const dupName = getSheetField(duplicateRec, 'name') || "another visitor";
@@ -1971,7 +2074,6 @@
         ? editingRecordId
         : 'DGM_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
 
-      // Lock the exact manually typed Reg No in memory for this ID
       verifiedRegNoMap.set(String(recordUniqueId), fullRegNo);
 
       const entry = {
@@ -2646,14 +2748,12 @@
       document.getElementById("registrationForm").reset();
       document.getElementById("stateInput").value = "Karnataka";
       initTodaysDate();
-      // Keep Reg No blank so the user always types it manually
       document.getElementById("manualSeqInput").value = "";
       updateRegNoPreview();
       removePhoto();
       document.getElementById("refillFeedback").classList.add("hidden");
       document.getElementById("registrationModal").classList.remove("hidden");
 
-      // Refresh sheet data in background so duplicate check is 100% up-to-date
       await syncDataFromSheet();
       updateRegNoPreview();
     }
