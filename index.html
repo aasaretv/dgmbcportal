@@ -136,7 +136,7 @@
     </div>
   </div>
 
-  <!-- ================= SEARCH AUTH MODAL (jesus2coming) ================= -->
+  <!-- ================= SEARCH AUTH MODAL ================= -->
   <div id="searchAuthModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-md p-4 hidden">
     <div class="bg-slate-900 border border-amber-500/50 rounded-2xl p-6 sm:p-7 max-w-sm w-full text-center shadow-2xl">
       <div class="w-12 h-12 mx-auto mb-3 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center text-xl">
@@ -162,7 +162,7 @@
     </div>
   </div>
 
-  <!-- ================= AADHAAR QR SCANNER MODAL (LIVE CAMERA + MOBILE SNAP + UPLOAD) ================= -->
+  <!-- ================= AADHAAR QR SCANNER MODAL ================= -->
   <div id="aadhaarQrModal" class="fixed inset-0 z-[65] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 hidden">
     <div class="bg-slate-900 border border-amber-500/50 rounded-2xl max-w-md w-full p-4 sm:p-5 flex flex-col items-center shadow-2xl space-y-3">
       <div class="w-full flex justify-between items-center border-b border-slate-800 pb-2">
@@ -183,10 +183,8 @@
 
       <p class="text-[11px] text-slate-300 text-center">Hold the Aadhaar QR code steady inside the live camera view, or use <strong>Camera Snap</strong> / <strong>Upload File</strong> below.</p>
 
-      <!-- Live Video / Preview Box -->
       <div id="qrReaderBox" class="relative w-full bg-black rounded-xl overflow-hidden border border-slate-700 min-h-[250px] flex items-center justify-center">
         <video id="nativeQrVideo" autoplay playsinline muted class="w-full h-64 object-cover hidden"></video>
-        <!-- Scanning target overlay -->
         <div id="qrTargetOverlay" class="pointer-events-none absolute inset-0 flex items-center justify-center hidden">
           <div class="w-48 h-48 border-2 border-amber-400/80 rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]"></div>
         </div>
@@ -194,16 +192,13 @@
 
       <p id="qrStatusMsg" class="text-[11px] text-amber-300 font-medium text-center"></p>
 
-      <!-- Action Buttons: Live Camera, Native Mobile Camera Snap, and File Upload -->
       <div class="w-full grid grid-cols-2 gap-2 pt-1">
-        <!-- Mobile Native Camera Capture (Forces Phone Camera App) -->
         <label class="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold text-center cursor-pointer transition flex items-center justify-center space-x-1.5 shadow">
           <i class="fa-solid fa-camera"></i>
           <span>Camera Snap QR</span>
           <input type="file" id="qrCameraCaptureInput" accept="image/*" capture="environment" class="hidden" onchange="scanAadhaarQrFromFile(event)">
         </label>
 
-        <!-- Gallery / Desktop File Picker -->
         <label class="py-2.5 px-3 bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/40 rounded-lg text-xs font-semibold text-center cursor-pointer transition flex items-center justify-center space-x-1.5">
           <i class="fa-solid fa-file-arrow-up"></i>
           <span>Upload Image</span>
@@ -361,7 +356,6 @@
             <input type="date" id="entryDate" required onchange="handleDateChange()" class="w-full sm:w-auto bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-slate-100 text-xs focus:border-amber-400 focus:outline-none">
           </div>
           
-          <!-- STRICTLY MANUAL REGISTRATION NUMBER (1 to 800) WITH DUPLICATE CHECK -->
           <div class="space-y-1 w-full sm:w-56">
             <label class="block font-medium text-amber-400 text-[11px]">Reg No. (Type 1 to 800): <span class="text-red-400">*</span></label>
             <input type="number" id="manualSeqInput" min="1" max="800" required placeholder="Type Reg No. (1 - 800)" oninput="handleRegSeqChange(this)"
@@ -558,7 +552,7 @@
           </div>
         </div>
 
-        <!-- Faith & Health Questionnaire (Conditional Enable/Disable for Details & From When) -->
+        <!-- Faith & Health Questionnaire -->
         <div class="bg-slate-850 p-2.5 rounded-lg border border-slate-800 space-y-2.5">
           <h4 class="font-bold text-amber-400 text-xs uppercase tracking-wider">Health & Faith Questions</h4>
           
@@ -719,7 +713,7 @@
     </div>
   </div>
 
-  <!-- ================= PRINT PREVIEW & PDF CONTAINER (PROPER A4 ALIGNMENT) ================= -->
+  <!-- ================= PRINT PREVIEW & PDF CONTAINER ================= -->
   <div id="printPreviewModal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-1 sm:p-4 hidden">
     <div class="bg-white text-black w-full max-w-4xl max-h-[98vh] rounded-xl flex flex-col shadow-2xl overflow-hidden">
       
@@ -740,10 +734,8 @@
         </div>
       </div>
 
-      <!-- Printable Sheet: Exact A4 Typography & Balanced Grid Alignment -->
       <div class="p-5 sm:p-8 overflow-y-auto flex-1 bg-white text-black a4-sheet" id="printableArea">
         
-        <!-- Header -->
         <div class="flex justify-between items-center border-b-2 border-red-700 pb-3 mb-3 bg-white">
           <div class="w-24 h-24 bg-white rounded-full shrink-0 logo-insert"></div>
           <div class="text-center flex-1 px-3">
@@ -753,21 +745,17 @@
             <p class="text-[11.5px] text-slate-800 leading-snug">Shankarpura Post-574115, Udupi Dist. Karnataka, India. Mobile: 0091-9902334941</p>
             <p class="text-[11.5px] text-red-700 font-bold mt-0.5">www.dgmbethelchurch.org</p>
           </div>
-          <!-- Clickable Photo Box in View / Print -->
           <div id="printPhotoContainer" class="w-24 h-28 border border-slate-500 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0 transition" title="Click to view/enlarge photo">
             <span class="text-[11px] text-slate-400 font-medium">Photo</span>
           </div>
         </div>
 
-        <!-- Banner: Reg No & Date -->
         <div class="flex justify-between items-center bg-slate-100 px-3.5 py-2 rounded border border-slate-400 font-bold mb-3 text-[13.5px]">
           <span id="printRegNoText" class="font-mono text-red-700 text-[15px] font-bold text-left">Reg No: -</span>
           <span id="printDateText" class="font-mono text-slate-900 text-[15px] font-bold text-right">Date: -</span>
         </div>
 
-        <!-- BOX FORMAT: Personal Details with Occupation, City, District, State -->
         <div class="border border-slate-500 rounded mb-3 bg-white text-black text-[13px]">
-          <!-- Row 1: Name & Relative Name -->
           <div class="grid grid-cols-2 border-b border-slate-400">
             <div class="p-2.5 border-r border-slate-400 text-left">
               <strong>ಹೆಸರು / Full Name:</strong> <span id="pName" class="font-semibold ml-1 text-black"></span>
@@ -777,7 +765,6 @@
             </div>
           </div>
 
-          <!-- Row 2: Gender, DOB & Occupation -->
           <div class="grid grid-cols-3 border-b border-slate-400">
             <div class="p-2.5 border-r border-slate-400 text-left">
               <strong>ಲಿಂಗ / Gender:</strong> <span id="pGender" class="font-medium ml-1 text-black"></span>
@@ -790,7 +777,6 @@
             </div>
           </div>
 
-          <!-- Row 3: Aadhaar & Mobile -->
           <div class="grid grid-cols-2 border-b border-slate-400 bg-amber-50/40">
             <div class="p-2.5 border-r border-slate-400 text-left">
               <strong>ಆಧಾರ್ ಸಂಖ್ಯೆ / Aadhaar No:</strong> <span id="pAadhaar" class="font-mono font-semibold ml-1 text-black"></span>
@@ -800,7 +786,6 @@
             </div>
           </div>
 
-          <!-- Row 4: Full Address & Pin Code -->
           <div class="grid grid-cols-3 border-b border-slate-400">
             <div class="col-span-2 p-2.5 border-r border-slate-400 text-left">
               <strong>ಸಂಪೂರ್ಣ ವಿಳಾಸ / Full Address:</strong> <span id="pAddress" class="font-medium ml-1 text-black"></span>
@@ -810,7 +795,6 @@
             </div>
           </div>
 
-          <!-- Row 5: City, District, State -->
           <div class="grid grid-cols-3 bg-slate-50">
             <div class="p-2.5 border-r border-slate-400 text-left">
               <strong>ಊರು/ನಗರ / City:</strong> <span id="pCity" class="font-semibold ml-1 text-black"></span>
@@ -824,7 +808,6 @@
           </div>
         </div>
 
-        <!-- Additional Fields with Left Alignment -->
         <div class="space-y-2 text-black text-[13px]">
           <div class="border-b border-dotted border-slate-400 pb-1.5 text-left">
             <strong>ಬಂದವರ ಹೆಸರು ಮತ್ತು ಕಾಯಿಲೆ / Accompanying Visitors & Disease:</strong> <span id="pVisitors" class="font-medium ml-1 text-black"></span>
@@ -836,7 +819,6 @@
             <strong>ಬರುವ ಉದ್ದೇಶ / Purpose of visit:</strong> <span id="pPurpose" class="font-medium ml-1 text-black"></span>
           </div>
 
-          <!-- Health & Faith Questions -->
           <div class="bg-slate-50 p-3 rounded border border-slate-400 space-y-1 text-[12.5px] leading-snug text-left text-black">
             <p><strong>1. ಕಾಯಿಲೆ ಇದೆಯಾ? / Any disease:</strong> <span id="pDisease" class="font-medium ml-1 text-black"></span></p>
             <p><strong>2. ಚಿಕಿತ್ಸೆ ಪಡೆಯುತ್ತಿದ್ದೀರಾ? / Treatment:</strong> <span id="pTreatment" class="font-medium ml-1 text-black"></span></p>
@@ -845,10 +827,8 @@
             <p><strong>5. ಸ್ವಂತ ಇಷ್ಟದಿಂದ ಪಾಲ್ಗೊಳ್ಳುತ್ತಿದ್ದೀರಾ? / Attending with own interest:</strong> <span id="pInterest" class="font-medium ml-1 text-black"></span></p>
           </div>
 
-          <!-- Dynamic Self Declaration Container -->
           <div id="printDeclarationBox" class="p-3 rounded border border-slate-400 mt-2 text-[12px] leading-relaxed text-justify text-black"></div>
 
-          <!-- Signatures Section -->
           <div class="flex justify-between items-end pt-12 pb-1 text-[13px] font-bold text-slate-900">
             <div class="text-left">ಹೆಸರು / Name</div>
             <div class="text-center">ಸಹಿ / Signature</div>
@@ -870,15 +850,13 @@
     let activePreviewRecord = null;
     let isEditingMode = false;
     let editingRecordId = null;
+    let editingOriginalRegNo = null;
 
-    // Live QR Camera State
     let qrVideoStream = null;
     let qrScanInterval = null;
     let qrFacingMode = "environment";
 
-    // Session-level map of saved IDs -> RegNo so Google Sheet sync delays never alter a newly saved Reg No.
     const verifiedRegNoMap = new Map();
-
     let pendingShareData = { title: "", text: "", url: "" };
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -892,7 +870,6 @@
       processOfflineQueue().then(() => syncDataFromSheet());
     });
 
-    // Enable/Disable Disease Details and Treatment Duration inputs based on Yes/No selection
     function toggleHealthFields() {
       const hasDisSelect = document.getElementById("hasDisease");
       const disDetailsInput = document.getElementById("diseaseDetails");
@@ -917,7 +894,6 @@
       }
     }
 
-    // Automatically upload any waiting offline entries as soon as internet reconnects
     window.addEventListener('online', async () => {
       await processOfflineQueue();
       await syncDataFromSheet();
@@ -1411,10 +1387,10 @@
       return list;
     }
 
-    // Universal Field Extractor (Strict key matching so Reg No. is never confused with regDate)
     function getSheetField(rec, type) {
       if (!rec || typeof rec !== "object") return "";
       const keyMap = {
+        id: ["id", "ID", "Id"],
         name: ["name", "Name", "NAME", "Full Name", "full name", "visitor_name", "ಹೆಸರು"],
         relativeName: ["relativeName", "RelativeName", "Relative", "relative", "Father/Husband Name", "father_name"],
         occupation: ["occupation", "Occupation", "OCCUPATION", "job", "Job", "profession", "ಉದ್ಯೋಗ"],
@@ -1486,6 +1462,7 @@
 
       const norm = { ...rawRow };
 
+      norm.id = getSheetField(rawRow, 'id') || `SHEET_ROW_${index + 1}`;
       norm.name = getSheetField(rawRow, 'name') || findByPartialKey(["name", "ಹೆಸರು", "visitor", "applicant", "person"], ["relative", "father", "husband", "1", "2", "3", "4", "5"]);
       norm.mobile = getSheetField(rawRow, 'mobile') || findByPartialKey(["mobile", "phone", "contact", "cell", "ಮೊಬೈಲ್"]);
       norm.aadhaar = getSheetField(rawRow, 'aadhaar') || findByPartialKey(["aadhaar", "aadhar", "ಆಧಾರ್", "uid"]);
@@ -1501,7 +1478,6 @@
       norm.declarationLang = getSheetField(rawRow, 'declarationLang') || findByPartialKey(["decl", "lang", "ಭಾಷೆ"]);
       norm.photo = getSheetField(rawRow, 'photo') || findByPartialKey(["photo", "img", "image", "pic"]);
 
-      // Preserve separate visitor1..visitor5 & visitorDisease1..visitorDisease5 fields
       for (let i = 1; i <= 5; i++) {
         norm[`visitor${i}`] = rawRow[`visitor${i}`] !== undefined && rawRow[`visitor${i}`] !== null
           ? String(rawRow[`visitor${i}`]).trim()
@@ -1540,8 +1516,6 @@
         if (foundName) norm.name = String(foundName).trim();
       }
 
-      if (!norm.id) norm.id = rawRow.ID || `SHEET_ROW_${index + 1}`;
-
       if (verifiedRegNoMap.has(String(norm.id))) {
         norm.regNo = verifiedRegNoMap.get(String(norm.id));
       }
@@ -1551,7 +1525,7 @@
 
     function getFullRegNoFromRecord(rec) {
       if (!rec) return "-";
-      const recId = String(rec.id || rec.ID || "");
+      const recId = getSheetField(rec, 'id');
       if (recId && verifiedRegNoMap.has(recId)) {
         return verifiedRegNoMap.get(recId);
       }
@@ -1595,18 +1569,22 @@
       const targetDateDDMMYYYY = parseDateToDDMMYYYY(dateStr);
 
       return churchEntries.find(rec => {
-        const recId = String(rec.id || rec.ID || "");
-        if (isEditingMode && editingRecordId && recId === String(editingRecordId)) {
-          return false;
+        const recId = getSheetField(rec, 'id');
+        const recFullReg = getFullRegNoFromRecord(rec);
+
+        if (isEditingMode) {
+          if (editingRecordId && recId && recId === String(editingRecordId)) {
+            return false;
+          }
+          if (editingOriginalRegNo && recFullReg && recFullReg.toLowerCase() === String(editingOriginalRegNo).toLowerCase()) {
+            return false;
+          }
         }
+
         const recDate = extractRecordDate(rec);
         const recSeq = extractSequenceNumberFromRecord(rec);
         return recDate === targetDateDDMMYYYY && recSeq === targetSeq;
       }) || null;
-    }
-
-    function isRegNumberDuplicateForDate(dateStr, seqNum) {
-      return Boolean(findDuplicateRecordForDate(dateStr, seqNum));
     }
 
     async function forceManualSync() {
@@ -1627,7 +1605,7 @@
         return;
       }
 
-      const recId = rec.id || rec.ID || "";
+      const recId = getSheetField(rec, 'id');
       const recMobile = getSheetField(rec, 'mobile');
 
       const deletePayload = {
@@ -1897,6 +1875,7 @@
         const latestMatch = matches[matches.length - 1];
         isEditingMode = false;
         editingRecordId = null;
+        editingOriginalRegNo = null;
 
         feedback.innerText = `✓ Found ${matches.length} previous visit(s) in Google Sheet for "${getSheetField(latestMatch, 'name')}". Details auto-filled! Please type today's Reg No.`;
         feedback.classList.remove("hidden");
@@ -1916,14 +1895,14 @@
       const distVal = getSheetField(record, 'district');
       const stateVal = getSheetField(record, 'state');
 
-      if (nameVal) document.getElementById("nameInput").value = nameVal;
-      if (relVal) document.getElementById("relativeNameInput").value = relVal;
-      if (occVal) document.getElementById("occupationInput").value = occVal;
-      if (addrVal) document.getElementById("addressInput").value = addrVal;
-      if (pinVal) document.getElementById("pincodeInput").value = pinVal;
-      if (cityVal) document.getElementById("cityInput").value = cityVal;
-      if (distVal) document.getElementById("districtInput").value = distVal;
-      if (stateVal) document.getElementById("stateInput").value = stateVal;
+      document.getElementById("nameInput").value = nameVal || "";
+      document.getElementById("relativeNameInput").value = relVal || "";
+      document.getElementById("occupationInput").value = occVal || "";
+      document.getElementById("addressInput").value = addrVal || "";
+      document.getElementById("pincodeInput").value = pinVal || "";
+      document.getElementById("cityInput").value = cityVal || "";
+      document.getElementById("districtInput").value = distVal || "";
+      document.getElementById("stateInput").value = stateVal || "Karnataka";
       
       if (pinVal && (!cityVal || !distVal)) {
         handlePincodeLookup(pinVal);
@@ -1932,25 +1911,18 @@
       const genVal = getSheetField(record, 'gender');
       if (genVal) document.getElementById("genderInput").value = genVal;
       const dobVal = getSheetField(record, 'dob');
-      if (dobVal) document.getElementById("dobInput").value = normalizeToYMD(dobVal);
+      document.getElementById("dobInput").value = dobVal ? normalizeToYMD(dobVal) : "";
       
       const aadhaarVal = getSheetField(record, 'aadhaar');
-      if (aadhaarVal && aadhaarVal !== "Not Provided") {
-        document.getElementById("aadhaarInput").value = aadhaarVal;
-      }
+      document.getElementById("aadhaarInput").value = (aadhaarVal && aadhaarVal !== "Not Provided") ? aadhaarVal : "";
       const mobileVal = getSheetField(record, 'mobile');
-      if (mobileVal) {
-        document.getElementById("mobileInput").value = mobileVal;
-      }
+      document.getElementById("mobileInput").value = mobileVal || "";
 
       if (isEdit) {
         const seqNum = extractSequenceNumberFromRecord(record);
-        if (seqNum !== null) {
-          document.getElementById("manualSeqInput").value = seqNum;
-        }
+        document.getElementById("manualSeqInput").value = seqNum !== null ? seqNum : "";
       }
 
-      // Sync separate visitor name & disease columns first, with fallback for legacy combined rows
       const legacyVisitorsArr = Array.isArray(record.visitors)
         ? record.visitors
         : (typeof record.visitors === "string" && record.visitors ? record.visitors.split(",").map(s => s.trim()) : []);
@@ -1978,30 +1950,25 @@
         }
       }
 
-      const hk = getSheetField(record, 'howKnow');
-      if (hk) document.getElementById("howKnowInput").value = hk;
-      const purp = getSheetField(record, 'purpose');
-      if (purp) document.getElementById("purposeInput").value = purp;
+      document.getElementById("howKnowInput").value = getSheetField(record, 'howKnow') || "";
+      document.getElementById("purposeInput").value = getSheetField(record, 'purpose') || "";
 
       const hd = getSheetField(record, 'hasDisease');
       document.getElementById("hasDisease").value = (hd && hd.toLowerCase() === "yes") ? "Yes" : "No";
-      const dd = getSheetField(record, 'diseaseDetails');
-      document.getElementById("diseaseDetails").value = dd || "";
+      document.getElementById("diseaseDetails").value = getSheetField(record, 'diseaseDetails') || "";
 
       const tt = getSheetField(record, 'takingTreatment');
       document.getElementById("takingTreatment").value = (tt && tt.toLowerCase() === "yes") ? "Yes" : "No";
-      const td = getSheetField(record, 'treatmentDuration');
-      document.getElementById("treatmentDuration").value = td || "";
+      document.getElementById("treatmentDuration").value = getSheetField(record, 'treatmentDuration') || "";
 
-      // Sync enabled/disabled state with populated Yes/No values
       toggleHealthFields();
 
       const ti = getSheetField(record, 'treatmentImprovement');
-      if (ti) document.getElementById("treatmentImprovement").value = ti;
+      document.getElementById("treatmentImprovement").value = (ti && ti.toLowerCase() === "yes") ? "Yes" : "No";
       const bh = getSheetField(record, 'believeHealing');
-      if (bh) document.getElementById("believeHealing").value = bh;
+      document.getElementById("believeHealing").value = (bh && bh.toLowerCase() === "no") ? "No" : "Yes";
       const oi = getSheetField(record, 'ownInterest');
-      if (oi) document.getElementById("ownInterest").value = oi;
+      document.getElementById("ownInterest").value = (oi && oi.toLowerCase() === "no") ? "No" : "Yes";
 
       const chosenLang = getSheetField(record, 'declarationLang').toLowerCase();
       if (chosenLang.includes('eng')) {
@@ -2019,10 +1986,11 @@
         document.getElementById("capturedPhotoImg").classList.remove("hidden");
         document.getElementById("photoPlaceholder").classList.add("hidden");
         document.getElementById("removePhotoBtn").classList.remove("hidden");
+      } else {
+        removePhoto();
       }
     }
 
-    // STRICT GOOGLE SHEET FETCH: Shows ONLY records saved in Google Sheets
     async function syncDataFromSheet() {
       const statusEl = document.getElementById("syncStatus");
       const dotEl = document.getElementById("syncStatusDot");
@@ -2141,7 +2109,6 @@
 
       const visitors = collectVisitorsFromForm();
 
-      // Separate visitor names & diseases (1 to 5)
       const v1 = document.getElementById("visitor1").value.trim();
       const vd1 = document.getElementById("visitorDisease1").value.trim();
       const v2 = document.getElementById("visitor2").value.trim();
@@ -2175,6 +2142,7 @@
       const entry = {
         id: recordUniqueId,
         isEdit: isEditingMode,
+        originalRegNo: editingOriginalRegNo || "",
         regNo: fullRegNo,
         "Reg No.": fullRegNo,
         "Reg No": fullRegNo,
@@ -2250,16 +2218,20 @@
         }
 
         const confirmedRegNo = json.savedRegNo || fullRegNo;
-        verifiedRegNoMap.set(String(recordUniqueId), confirmedRegNo);
+        const confirmedId = json.id || recordUniqueId;
+        verifiedRegNoMap.set(String(confirmedId), confirmedRegNo);
 
-        alert(isEditingMode
-          ? `✓ Record Updated Successfully!\nReg No: ${confirmedRegNo}\nDate: ${formattedEntryDate}`
-          : `✓ New Record Saved to Google Sheet!\nReg No: ${confirmedRegNo}\nDate: ${formattedEntryDate}`);
-
+        const wasEdit = isEditingMode;
         isEditingMode = false;
         editingRecordId = null;
+        editingOriginalRegNo = null;
+
         await syncDataFromSheet();
         closeNewEntryModal();
+
+        alert(wasEdit
+          ? `✓ Record Updated Successfully!\nReg No: ${confirmedRegNo}\nDate: ${formattedEntryDate}`
+          : `✓ New Record Saved to Google Sheet!\nReg No: ${confirmedRegNo}\nDate: ${formattedEntryDate}`);
       } catch (err) {
         let queue = JSON.parse(localStorage.getItem("dgm_offline_queue") || "[]");
         queue.push(entry);
@@ -2268,6 +2240,7 @@
         alert(`No internet connection!\n\nRecord (${fullRegNo}) is safely queued in the background and will automatically upload to your Google Sheet as soon as internet reconnects.`);
         isEditingMode = false;
         editingRecordId = null;
+        editingOriginalRegNo = null;
         closeNewEntryModal();
       } finally {
         submitBtn.disabled = false;
@@ -2572,8 +2545,14 @@
 
     function editRecord(rec) {
       closeSearchModal();
+      document.getElementById("registrationForm").reset();
+      removePhoto();
+      document.getElementById("refillFeedback").classList.add("hidden");
+
       isEditingMode = true;
-      editingRecordId = rec.id || rec.ID || null;
+      editingRecordId = getSheetField(rec, 'id') || null;
+      editingOriginalRegNo = getFullRegNoFromRecord(rec) || null;
+
       document.getElementById("formModalTitle").innerText = "Edit Entry / ತಿದ್ದುಪಡಿ";
       document.getElementById("registrationModal").classList.remove("hidden");
       
@@ -2634,7 +2613,6 @@
       document.getElementById("pGender").innerText = genStr === 'F' ? 'Female / ಹೆಣ್ಣು' : (genStr === 'Other' ? 'Other / ಇತರ' : 'Male / ಗಂಡು');
       document.getElementById("pDob").innerText = cleanDob;
 
-      // Read separate visitor name & disease columns first, with legacy fallback
       const visitorsList = [];
       for (let i = 1; i <= 5; i++) {
         const vn = rec[`visitor${i}`] ? String(rec[`visitor${i}`]).trim() : "";
@@ -2882,10 +2860,10 @@
       promptShareModal(title, text);
     }
 
-    // Opens New Entry with a BLANK Reg No. input and disabled health detail fields by default
     async function openNewEntryModal() {
       isEditingMode = false;
       editingRecordId = null;
+      editingOriginalRegNo = null;
       document.getElementById("formModalTitle").innerText = "New Entry / ಹೊಸ ನೋಂದಣಿ";
       document.getElementById("registrationForm").reset();
       document.getElementById("stateInput").value = "Karnataka";
@@ -2907,6 +2885,7 @@
       document.getElementById("registrationModal").classList.add("hidden");
       isEditingMode = false;
       editingRecordId = null;
+      editingOriginalRegNo = null;
     }
   </script>
 </body>
