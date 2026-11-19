@@ -1371,6 +1371,26 @@
       }
     }
 
+    // Safely split combined visitors string ONLY on commas outside parentheses (...)
+    function splitVisitorsSafely(str) {
+      if (!str) return [];
+      const result = [];
+      let current = "";
+      let depth = 0;
+      for (const ch of String(str)) {
+        if (ch === "(") depth++;
+        else if (ch === ")" && depth > 0) depth--;
+        if (ch === "," && depth === 0) {
+          if (current.trim()) result.push(current.trim());
+          current = "";
+        } else {
+          current += ch;
+        }
+      }
+      if (current.trim()) result.push(current.trim());
+      return result;
+    }
+
     function collectVisitorsFromForm() {
       const list = [];
       for (let i = 1; i <= 5; i++) {
@@ -1925,7 +1945,7 @@
 
       const legacyVisitorsArr = Array.isArray(record.visitors)
         ? record.visitors
-        : (typeof record.visitors === "string" && record.visitors ? record.visitors.split(",").map(s => s.trim()) : []);
+        : splitVisitorsSafely(record.visitors);
 
       for (let i = 1; i <= 5; i++) {
         const vInput = document.getElementById(`visitor${i}`);
@@ -2626,7 +2646,7 @@
         if (Array.isArray(rec.visitors) && rec.visitors.length > 0) {
           visitorsList.push(...rec.visitors);
         } else if (typeof rec.visitors === "string" && rec.visitors.trim() !== "") {
-          visitorsList.push(...rec.visitors.split(",").map(s => s.trim()).filter(Boolean));
+          visitorsList.push(...splitVisitorsSafely(rec.visitors));
         }
       }
       document.getElementById("pVisitors").innerText = visitorsList.length > 0 ? visitorsList.join(", ") : 'None';
