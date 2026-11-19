@@ -987,7 +987,6 @@
       const statusMsg = document.getElementById("qrStatusMsg");
       const readerBox = document.getElementById("qrReaderBox");
 
-      // Restore video element inside readerBox if it was replaced by an uploaded image preview
       if (!document.getElementById("nativeQrVideo")) {
         readerBox.innerHTML = `
           <video id="nativeQrVideo" autoplay playsinline muted class="w-full h-64 object-cover hidden"></video>
@@ -1007,7 +1006,6 @@
 
       statusMsg.innerText = "Opening live camera...";
 
-      // Progressive camera constraints so mobile phones never fail with OverconstrainedError
       const constraintList = [
         { video: { facingMode: { ideal: qrFacingMode }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
         { video: { facingMode: qrFacingMode }, audio: false },
@@ -1038,7 +1036,6 @@
 
       statusMsg.innerText = "Scanning live... Hold the Aadhaar QR code inside the yellow square.";
 
-      // Prepare both Native BarcodeDetector AND jsQR Canvas frame scanner so every mobile & desktop browser scans live
       let nativeDetector = null;
       if ('BarcodeDetector' in window) {
         try {
@@ -1054,7 +1051,6 @@
       qrScanInterval = setInterval(async () => {
         if (!videoEl || videoEl.readyState < 2 || videoEl.paused) return;
 
-        // 1. Try Hardware BarcodeDetector first
         if (nativeDetector) {
           try {
             const barcodes = await nativeDetector.detect(videoEl);
@@ -1065,7 +1061,6 @@
           } catch (e) {}
         }
 
-        // 2. Simultaneously run jsQR frame decoder on the live video feed (works on iOS Safari, Android Chrome, Desktop)
         if (typeof jsQR === "function") {
           try {
             const vw = videoEl.videoWidth || 640;
@@ -1074,7 +1069,6 @@
             scanCanvas.height = vh;
             scanCtx.drawImage(videoEl, 0, 0, vw, vh);
 
-            // Scan full video frame
             const imgData = scanCtx.getImageData(0, 0, vw, vh);
             const code = jsQR(imgData.data, vw, vh, { inversionAttempts: "dontInvert" });
             if (code && code.data && code.data.trim().length > 20) {
@@ -1082,7 +1076,6 @@
               return;
             }
 
-            // Also scan center zoomed crop of the video frame for dense Aadhaar QR codes
             const cx = Math.floor(vw * 0.2);
             const cy = Math.floor(vh * 0.2);
             const cw = Math.floor(vw * 0.6);
@@ -1493,7 +1486,7 @@
 
       const norm = { ...rawRow };
 
-      norm.name = getSheetField(rawRow, 'name') || findByPartialKey(["name", "ಹೆಸರು", "visitor", "applicant", "person"], ["relative", "father", "husband"]);
+      norm.name = getSheetField(rawRow, 'name') || findByPartialKey(["name", "ಹೆಸರು", "visitor", "applicant", "person"], ["relative", "father", "husband", "1", "2", "3", "4", "5"]);
       norm.mobile = getSheetField(rawRow, 'mobile') || findByPartialKey(["mobile", "phone", "contact", "cell", "ಮೊಬೈಲ್"]);
       norm.aadhaar = getSheetField(rawRow, 'aadhaar') || findByPartialKey(["aadhaar", "aadhar", "ಆಧಾರ್", "uid"]);
       norm.regNo = getSheetField(rawRow, 'regNo') || findByPartialKey(["reg no", "regno", "registration", "ನೋಂದಣಿ"], ["date", "time"]);
@@ -1507,6 +1500,16 @@
       norm.pincode = getSheetField(rawRow, 'pincode') || findByPartialKey(["pin", "zip", "ಕೋಡ್"]);
       norm.declarationLang = getSheetField(rawRow, 'declarationLang') || findByPartialKey(["decl", "lang", "ಭಾಷೆ"]);
       norm.photo = getSheetField(rawRow, 'photo') || findByPartialKey(["photo", "img", "image", "pic"]);
+
+      // Preserve separate visitor1..visitor5 & visitorDisease1..visitorDisease5 fields
+      for (let i = 1; i <= 5; i++) {
+        norm[`visitor${i}`] = rawRow[`visitor${i}`] !== undefined && rawRow[`visitor${i}`] !== null
+          ? String(rawRow[`visitor${i}`]).trim()
+          : "";
+        norm[`visitorDisease${i}`] = rawRow[`visitorDisease${i}`] !== undefined && rawRow[`visitorDisease${i}`] !== null
+          ? String(rawRow[`visitorDisease${i}`]).trim()
+          : "";
+      }
 
       if (!norm.regNo) {
         const foundReg = nonEmptyValues.find(v => /^dgmbc\/\d{1,2}\/\d{1,2}\/\d{4}\/\d+/i.test(String(v).trim()));
@@ -1947,28 +1950,31 @@
         }
       }
 
-      const visitorsArr = Array.isArray(record.visitors)
+      // Sync separate visitor name & disease columns first, with fallback for legacy combined rows
+      const legacyVisitorsArr = Array.isArray(record.visitors)
         ? record.visitors
         : (typeof record.visitors === "string" && record.visitors ? record.visitors.split(",").map(s => s.trim()) : []);
 
       for (let i = 1; i <= 5; i++) {
         const vInput = document.getElementById(`visitor${i}`);
         const dInput = document.getElementById(`visitorDisease${i}`);
-        const rawEntry = visitorsArr[i - 1] || record[`visitor${i}`] || "";
-        const explicitDis = (Array.isArray(record.visitorDiseases) && record.visitorDiseases[i - 1]) || record[`visitorDisease${i}`] || "";
 
-        if (rawEntry) {
+        const sepName = record[`visitor${i}`] !== undefined ? String(record[`visitor${i}`]).trim() : "";
+        const sepDis = record[`visitorDisease${i}`] !== undefined ? String(record[`visitorDisease${i}`]).trim() : "";
+
+        if (sepName || sepDis) {
+          if (vInput) vInput.value = sepName;
+          if (dInput) dInput.value = sepDis;
+        } else {
+          const rawEntry = legacyVisitorsArr[i - 1] || "";
           const match = String(rawEntry).match(/^(.*?)\s*\((.*)\)$/);
-          if (match && !explicitDis) {
+          if (match) {
             if (vInput) vInput.value = match[1].trim();
             if (dInput) dInput.value = match[2].trim();
           } else {
             if (vInput) vInput.value = rawEntry;
-            if (dInput) dInput.value = explicitDis;
+            if (dInput) dInput.value = "";
           }
-        } else {
-          if (vInput) vInput.value = "";
-          if (dInput) dInput.value = explicitDis;
         }
       }
 
@@ -2135,6 +2141,18 @@
 
       const visitors = collectVisitorsFromForm();
 
+      // Separate visitor names & diseases (1 to 5)
+      const v1 = document.getElementById("visitor1").value.trim();
+      const vd1 = document.getElementById("visitorDisease1").value.trim();
+      const v2 = document.getElementById("visitor2").value.trim();
+      const vd2 = document.getElementById("visitorDisease2").value.trim();
+      const v3 = document.getElementById("visitor3").value.trim();
+      const vd3 = document.getElementById("visitorDisease3").value.trim();
+      const v4 = document.getElementById("visitor4").value.trim();
+      const vd4 = document.getElementById("visitorDisease4").value.trim();
+      const v5 = document.getElementById("visitor5").value.trim();
+      const vd5 = document.getElementById("visitorDisease5").value.trim();
+
       const cityClean = document.getElementById("cityInput").value.trim();
       const distClean = document.getElementById("districtInput").value.trim();
       const stateClean = document.getElementById("stateInput").value.trim() || "Karnataka";
@@ -2187,6 +2205,16 @@
         Pincode: pinClean,
         "Pin Code": pinClean,
         gender: document.getElementById("genderInput").value,
+        visitor1: v1,
+        visitorDisease1: vd1,
+        visitor2: v2,
+        visitorDisease2: vd2,
+        visitor3: v3,
+        visitorDisease3: vd3,
+        visitor4: v4,
+        visitorDisease4: vd4,
+        visitor5: v5,
+        visitorDisease5: vd5,
         visitors: visitors,
         howKnow: document.getElementById("howKnowInput").value.trim(),
         purpose: document.getElementById("purposeInput").value.trim(),
@@ -2419,9 +2447,17 @@
       const dt = document.getElementById("searchDateInput").value;
 
       const filtered = churchEntries.filter(item => {
-        const visitorsStr = Array.isArray(item.visitors) 
+        const separateVisitors = [
+          item.visitor1, item.visitorDisease1,
+          item.visitor2, item.visitorDisease2,
+          item.visitor3, item.visitorDisease3,
+          item.visitor4, item.visitorDisease4,
+          item.visitor5, item.visitorDisease5
+        ].filter(Boolean).join(" ").toLowerCase();
+
+        const visitorsStr = (Array.isArray(item.visitors) 
           ? item.visitors.join(" ").toLowerCase() 
-          : (typeof item.visitors === "string" ? item.visitors.toLowerCase() : "");
+          : (typeof item.visitors === "string" ? item.visitors.toLowerCase() : "")) + " " + separateVisitors;
 
         const nameVal = getSheetField(item, 'name').toLowerCase();
         const relVal = getSheetField(item, 'relativeName').toLowerCase();
@@ -2598,11 +2634,23 @@
       document.getElementById("pGender").innerText = genStr === 'F' ? 'Female / ಹೆಣ್ಣು' : (genStr === 'Other' ? 'Other / ಇತರ' : 'Male / ಗಂಡು');
       document.getElementById("pDob").innerText = cleanDob;
 
-      const visitorsList = Array.isArray(rec.visitors) && rec.visitors.length > 0
-        ? rec.visitors
-        : (typeof rec.visitors === "string" && rec.visitors.trim() !== ""
-            ? rec.visitors.split(",").map(s => s.trim()).filter(Boolean)
-            : [rec.visitor1, rec.visitor2, rec.visitor3, rec.visitor4, rec.visitor5].filter(Boolean));
+      // Read separate visitor name & disease columns first, with legacy fallback
+      const visitorsList = [];
+      for (let i = 1; i <= 5; i++) {
+        const vn = rec[`visitor${i}`] ? String(rec[`visitor${i}`]).trim() : "";
+        const vd = rec[`visitorDisease${i}`] ? String(rec[`visitorDisease${i}`]).trim() : "";
+        if (vn && vd) visitorsList.push(`${vn} (${vd})`);
+        else if (vn) visitorsList.push(vn);
+        else if (vd) visitorsList.push(`Visitor ${i} (${vd})`);
+      }
+
+      if (visitorsList.length === 0) {
+        if (Array.isArray(rec.visitors) && rec.visitors.length > 0) {
+          visitorsList.push(...rec.visitors);
+        } else if (typeof rec.visitors === "string" && rec.visitors.trim() !== "") {
+          visitorsList.push(...rec.visitors.split(",").map(s => s.trim()).filter(Boolean));
+        }
+      }
       document.getElementById("pVisitors").innerText = visitorsList.length > 0 ? visitorsList.join(", ") : 'None';
 
       document.getElementById("pHowKnow").innerText = getSheetField(rec, 'howKnow') || '-';
@@ -2722,6 +2770,16 @@
         state: stateVal,
         pincode: pinVal || "-",
         gender: document.getElementById("genderInput").value,
+        visitor1: document.getElementById("visitor1").value.trim(),
+        visitorDisease1: document.getElementById("visitorDisease1").value.trim(),
+        visitor2: document.getElementById("visitor2").value.trim(),
+        visitorDisease2: document.getElementById("visitorDisease2").value.trim(),
+        visitor3: document.getElementById("visitor3").value.trim(),
+        visitorDisease3: document.getElementById("visitorDisease3").value.trim(),
+        visitor4: document.getElementById("visitor4").value.trim(),
+        visitorDisease4: document.getElementById("visitorDisease4").value.trim(),
+        visitor5: document.getElementById("visitor5").value.trim(),
+        visitorDisease5: document.getElementById("visitorDisease5").value.trim(),
         visitors: collectVisitorsFromForm(),
         howKnow: document.getElementById("howKnowInput").value.trim() || "-",
         purpose: document.getElementById("purposeInput").value.trim() || "-",
