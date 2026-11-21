@@ -183,7 +183,7 @@
 
       <p class="text-[11px] text-slate-300 text-center">Hold the Aadhaar QR code steady inside the live camera view, or use <strong>Camera Snap</strong> / <strong>Upload File</strong> below.</p>
 
-      <div id="qrReaderBox" class="relative w-full bg-black rounded-xl overflow-hidden border border-slate-700 min-h-[250px] flex items-center justify-center">
+      <div id="qrReaderBox" class="relative w-full bg-black rounded-xl overflow-hidden border border-slate-700 min-h-[260px] flex items-center justify-center">
         <video id="nativeQrVideo" autoplay playsinline muted class="w-full h-64 object-cover hidden"></video>
         <div id="qrTargetOverlay" class="pointer-events-none absolute inset-0 flex items-center justify-center hidden">
           <div class="w-48 h-48 border-2 border-amber-400/80 rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]"></div>
@@ -855,6 +855,7 @@
     let qrVideoStream = null;
     let qrScanInterval = null;
     let qrFacingMode = "environment";
+    let html5QrLiveInstance = null;
 
     const verifiedRegNoMap = new Map();
     let pendingShareData = { title: "", text: "", url: "" };
@@ -933,7 +934,7 @@
       });
     }
 
-    // ================= DIRECT LIVE CAMERA + IMAGE AADHAAR QR SCANNER =================
+    // ================= UPGRADED LIVE CAMERA + IMAGE AADHAAR QR SCANNER =================
     async function openAadhaarQrScanner() {
       stopCamera();
       document.getElementById("aadhaarQrModal").classList.remove("hidden");
@@ -946,10 +947,19 @@
       await startLiveQrVideo();
     }
 
-    function stopLiveQrStreamOnly() {
+    async function stopLiveQrStreamOnly() {
       if (qrScanInterval) {
         clearInterval(qrScanInterval);
         qrScanInterval = null;
+      }
+      if (html5QrLiveInstance) {
+        try {
+          if (html5QrLiveInstance.isScanning) {
+            await html5QrLiveInstance.stop();
+          }
+          html5QrLiveInstance.clear();
+        } catch (e) {}
+        html5QrLiveInstance = null;
       }
       if (qrVideoStream) {
         qrVideoStream.getTracks().forEach(t => t.stop());
@@ -958,67 +968,73 @@
     }
 
     async function startLiveQrVideo() {
-      stopLiveQrStreamOnly();
+      await stopLiveQrStreamOnly();
 
       const statusMsg = document.getElementById("qrStatusMsg");
       const readerBox = document.getElementById("qrReaderBox");
+      statusMsg.innerText = "Starting camera for Aadhaar QR...";
 
-      if (!document.getElementById("nativeQrVideo")) {
-        readerBox.innerHTML = `
-          <video id="nativeQrVideo" autoplay playsinline muted class="w-full h-64 object-cover hidden"></video>
-          <div id="qrTargetOverlay" class="pointer-events-none absolute inset-0 flex items-center justify-center hidden">
-            <div class="w-48 h-48 border-2 border-amber-400/80 rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]"></div>
-          </div>
-        `;
+      // Primary: Html5Qrcode with native BarcodeDetector + high-res rear camera autofocus
+      if (typeof Html5Qrcode === "function") {
+        readerBox.innerHTML = `<div id="html5QrLiveContainer" class="w-full min-h-[260px] bg-black"></div>`;
+        try {
+          html5QrLiveInstance = new Html5Qrcode("html5QrLiveContainer", {
+            experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+            verbose: false
+          });
+
+          await html5QrLiveInstance.start(
+            { facingMode: qrFacingMode },
+            {
+              fps: 15,
+              qrbox: { width: 230, height: 230 },
+              aspectRatio: 1.0,
+              videoConstraints: {
+                facingMode: qrFacingMode,
+                width: { ideal: 1920 },
+                height: { ideal: 1080 },
+                focusMode: "continuous"
+              }
+            },
+            (decodedText) => {
+              handleAadhaarQrDecoded(decodedText);
+            },
+            () => {}
+          );
+          statusMsg.innerText = "Camera active! Hold the Aadhaar QR square close (fill ~75% of the box).";
+          return;
+        } catch (err) {
+          console.warn("Html5Qrcode fallback to native video:", err);
+        }
       }
+
+      // Fallback: Native getUserMedia + BarcodeDetector / jsQR
+      readerBox.innerHTML = `
+        <video id="nativeQrVideo" autoplay playsinline muted class="w-full h-64 object-cover"></video>
+        <div id="qrTargetOverlay" class="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div class="w-52 h-52 border-2 border-amber-400/90 rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]"></div>
+        </div>
+      `;
 
       const videoEl = document.getElementById("nativeQrVideo");
-      const overlayEl = document.getElementById("qrTargetOverlay");
-
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        statusMsg.innerText = "Live camera requires HTTPS. Tap the green 'Camera Snap QR' button below to scan directly with your phone camera!";
-        return;
-      }
-
-      statusMsg.innerText = "Opening live camera...";
-
-      const constraintList = [
-        { video: { facingMode: { ideal: qrFacingMode }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
-        { video: { facingMode: qrFacingMode }, audio: false },
-        { video: true, audio: false }
-      ];
-
-      let stream = null;
-      for (const c of constraintList) {
-        try {
-          stream = await navigator.mediaDevices.getUserMedia(c);
-          if (stream) break;
-        } catch (err) {}
-      }
-
-      if (!stream) {
-        statusMsg.innerText = "Camera permission blocked or unavailable. Tap 'Camera Snap QR' below to use your phone's camera!";
-        return;
-      }
-
-      qrVideoStream = stream;
-      videoEl.srcObject = stream;
-      videoEl.classList.remove("hidden");
-      if (overlayEl) overlayEl.classList.remove("hidden");
-
       try {
+        qrVideoStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: qrFacingMode }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+          audio: false
+        });
+        videoEl.srcObject = qrVideoStream;
         await videoEl.play();
-      } catch (e) {}
-
-      statusMsg.innerText = "Scanning live... Hold the Aadhaar QR code inside the yellow square.";
+        statusMsg.innerText = "Scanning live... Hold the Aadhaar QR square inside the yellow frame.";
+      } catch (e) {
+        statusMsg.innerText = "Camera blocked. Please allow Camera permission in browser site settings or tap 'Camera Snap QR' below.";
+        return;
+      }
 
       let nativeDetector = null;
-      if ('BarcodeDetector' in window) {
+      if ("BarcodeDetector" in window) {
         try {
-          nativeDetector = new BarcodeDetector({ formats: ['qr_code'] });
-        } catch (e) {
-          nativeDetector = null;
-        }
+          nativeDetector = new BarcodeDetector({ formats: ["qr_code"] });
+        } catch (e) {}
       }
 
       const scanCanvas = document.createElement("canvas");
@@ -1039,36 +1055,23 @@
 
         if (typeof jsQR === "function") {
           try {
-            const vw = videoEl.videoWidth || 640;
-            const vh = videoEl.videoHeight || 480;
+            const vw = videoEl.videoWidth || 1280;
+            const vh = videoEl.videoHeight || 720;
             scanCanvas.width = vw;
             scanCanvas.height = vh;
             scanCtx.drawImage(videoEl, 0, 0, vw, vh);
-
             const imgData = scanCtx.getImageData(0, 0, vw, vh);
-            const code = jsQR(imgData.data, vw, vh, { inversionAttempts: "dontInvert" });
-            if (code && code.data && code.data.trim().length > 20) {
+            const code = jsQR(imgData.data, vw, vh, { inversionAttempts: "attemptBoth" });
+            if (code && code.data && code.data.trim().length > 15) {
               handleAadhaarQrDecoded(code.data);
-              return;
-            }
-
-            const cx = Math.floor(vw * 0.2);
-            const cy = Math.floor(vh * 0.2);
-            const cw = Math.floor(vw * 0.6);
-            const ch = Math.floor(vh * 0.6);
-            const centerData = scanCtx.getImageData(cx, cy, cw, ch);
-            const centerCode = jsQR(centerData.data, cw, ch, { inversionAttempts: "dontInvert" });
-            if (centerCode && centerCode.data && centerCode.data.trim().length > 20) {
-              handleAadhaarQrDecoded(centerCode.data);
-              return;
             }
           } catch (e) {}
         }
-      }, 220);
+      }, 200);
     }
 
     async function closeAadhaarQrScanner() {
-      stopLiveQrStreamOnly();
+      await stopLiveQrStreamOnly();
       document.getElementById("aadhaarQrModal").classList.add("hidden");
     }
 
@@ -1090,8 +1093,8 @@
 
     async function tryDecodeCanvasRegion(img, sx, sy, sw, sh, targetScale = 1, applyContrast = false) {
       const canvas = document.createElement("canvas");
-      const w = Math.min(2400, Math.max(600, Math.round(sw * targetScale)));
-      const h = Math.min(2400, Math.max(600, Math.round(sh * targetScale)));
+      const w = Math.min(2600, Math.max(700, Math.round(sw * targetScale)));
+      const h = Math.min(2600, Math.max(700, Math.round(sh * targetScale)));
       canvas.width = w;
       canvas.height = h;
 
@@ -1107,27 +1110,27 @@
         const d = imageData.data;
         for (let i = 0; i < d.length; i += 4) {
           const gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-          const val = gray < 135 ? 0 : 255;
+          const val = gray < 130 ? 0 : 255;
           d[i] = d[i + 1] = d[i + 2] = val;
         }
         ctx.putImageData(imageData, 0, 0);
       }
 
-      if (typeof jsQR === "function") {
-        const code = jsQR(imageData.data, w, h, { inversionAttempts: "attemptBoth" });
-        if (code && code.data && code.data.trim().length > 20) {
-          return code.data;
-        }
-      }
-
-      if ('BarcodeDetector' in window) {
+      if ("BarcodeDetector" in window) {
         try {
-          const detector = new BarcodeDetector({ formats: ['qr_code'] });
+          const detector = new BarcodeDetector({ formats: ["qr_code"] });
           const barcodes = await detector.detect(canvas);
           if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
             return barcodes[0].rawValue;
           }
         } catch (e) {}
+      }
+
+      if (typeof jsQR === "function") {
+        const code = jsQR(imageData.data, w, h, { inversionAttempts: "attemptBoth" });
+        if (code && code.data && code.data.trim().length > 15) {
+          return code.data;
+        }
       }
 
       return null;
@@ -1139,10 +1142,10 @@
 
       const statusMsg = document.getElementById("qrStatusMsg");
       const readerBox = document.getElementById("qrReaderBox");
-      statusMsg.innerText = "Scanning image across multiple zoom regions...";
+      statusMsg.innerText = "Scanning Aadhaar QR image...";
 
       try {
-        stopLiveQrStreamOnly();
+        await stopLiveQrStreamOnly();
 
         const img = await loadFileAsImage(file);
         const W = img.naturalWidth || img.width;
@@ -1172,7 +1175,7 @@
           }
         }
 
-        statusMsg.innerText = "Enhancing QR contrast & deep-scanning...";
+        statusMsg.innerText = "Enhancing contrast & deep-scanning QR...";
         for (const [sx, sy, sw, sh] of regions) {
           const result = await tryDecodeCanvasRegion(img, sx, sy, sw, sh, 2.0, true);
           if (result) {
@@ -1181,33 +1184,17 @@
           }
         }
 
-        const tempDiv = document.createElement("div");
-        tempDiv.id = "tempQrFileScanner";
-        tempDiv.style.display = "none";
-        document.body.appendChild(tempDiv);
-        const fileScanner = new Html5Qrcode("tempQrFileScanner");
-        try {
-          const decodedText = await fileScanner.scanFile(file, false);
-          document.body.removeChild(tempDiv);
-          if (decodedText) {
-            handleAadhaarQrDecoded(decodedText);
-            return;
-          }
-        } catch (e) {
-          document.body.removeChild(tempDiv);
-        }
-
-        statusMsg.innerText = "Could not read QR from full card photo. Tip: Move closer to JUST the QR code square or crop the QR square and try again!";
+        statusMsg.innerText = "Could not read QR from this photo. Crop tightly around ONLY the QR square and try again.";
       } catch (err) {
         console.error("QR File Scan Error:", err);
-        statusMsg.innerText = "Could not read QR code. Please take a closer photo of just the QR square.";
+        statusMsg.innerText = "Error reading image. Please take a close-up photo of just the QR code.";
       } finally {
         event.target.value = "";
       }
     }
 
     function bigIntStringToBytes(decStr) {
-      let big = BigInt(decStr);
+      let big = BigInt(decStr.replace(/[^0-9]/g, ""));
       const bytes = [];
       while (big > 0n) {
         bytes.push(Number(big & 0xffn));
@@ -1216,12 +1203,32 @@
       return new Uint8Array(bytes.reverse());
     }
 
+    function decompressUidaiBytes(byteArr) {
+      if (typeof pako === "undefined") return null;
+      for (let skip = 0; skip <= 4; skip++) {
+        const slice = skip === 0 ? byteArr : byteArr.subarray(skip);
+        try {
+          return pako.inflate(slice);
+        } catch (e1) {
+          try {
+            return pako.ungzip(slice);
+          } catch (e2) {
+            try {
+              return pako.inflateRaw(slice);
+            } catch (e3) {}
+          }
+        }
+      }
+      return null;
+    }
+
     function handleAadhaarQrDecoded(rawText) {
       if (!rawText) return;
       const trimmed = rawText.trim();
       const statusMsg = document.getElementById("qrStatusMsg");
       let parsedData = null;
 
+      // 1. Legacy XML Aadhaar QR Format
       if (trimmed.includes("PrintLetterBarcodeData") || trimmed.includes("uid=") || trimmed.startsWith("<")) {
         try {
           const getXmlAttr = (attrList) => {
@@ -1256,70 +1263,64 @@
         }
       }
 
+      // 2. UIDAI Secure Numeric QR Format (V1 / V2 / V3 / V4)
       if (!parsedData || (!parsedData.name && !parsedData.pincode)) {
-        const bigNumMatch = trimmed.match(/\d{100,}/);
-        if (bigNumMatch && typeof pako !== "undefined") {
+        const bigNumMatch = trimmed.match(/\d{60,}/);
+        if (bigNumMatch) {
           try {
             const compressedBytes = bigIntStringToBytes(bigNumMatch[0]);
-            let decompressed;
-            try {
-              decompressed = pako.inflate(compressedBytes);
-            } catch (zErr) {
-              decompressed = pako.ungzip(compressedBytes);
-            }
+            const decompressed = decompressUidaiBytes(compressedBytes);
 
-            const fields = [];
-            let start = 0;
-            const decoder = new TextDecoder("iso-8859-1");
-            for (let i = 0; i < decompressed.length; i++) {
-              if (decompressed[i] === 255) {
-                fields.push(decoder.decode(decompressed.subarray(start, i)).trim());
-                start = i + 1;
-                if (fields.length >= 19) break;
+            if (decompressed && decompressed.length > 10) {
+              const fields = [];
+              let start = 0;
+              const decoder = new TextDecoder("iso-8859-1");
+              for (let i = 0; i < decompressed.length; i++) {
+                if (decompressed[i] === 255) {
+                  fields.push(decoder.decode(decompressed.subarray(start, i)).trim());
+                  start = i + 1;
+                  if (fields.length >= 20) break;
+                }
               }
-            }
 
-            let offset = 0;
-            if (fields[0] && (fields[0].toUpperCase().startsWith("V") || fields[0].length <= 2)) {
-              offset = 1;
-              if (fields[1] && /^\d+$/.test(fields[1]) && fields[1].length <= 2) {
-                offset = 2;
+              let offset = 0;
+              if (fields[0] && (/^V\d+$/i.test(fields[0]) || /^\d{1,2}$/.test(fields[0]))) {
+                offset = 1;
+                if (fields[1] && /^\d{1,2}$/.test(fields[1])) {
+                  offset = 2;
+                }
               }
+
+              const refId = fields[offset] || "";
+              const name = fields[offset + 1] || "";
+              const dob = fields[offset + 2] || "";
+              const gender = fields[offset + 3] || "";
+              const careOf = (fields[offset + 4] || "").replace(/^(S\/O|D\/O|W\/O|C\/O)[:\s-]*/i, "").trim();
+              const district = fields[offset + 5] || "";
+              const landmark = fields[offset + 6] || "";
+              const house = fields[offset + 7] || "";
+              const location = fields[offset + 8] || "";
+              const pincode = fields[offset + 9] || "";
+              const postOffice = fields[offset + 10] || "";
+              const state = fields[offset + 11] || "";
+              const street = fields[offset + 12] || "";
+              const subDist = fields[offset + 13] || "";
+              const vtc = fields[offset + 14] || "";
+
+              parsedData = {
+                uid: refId.length >= 12 ? refId.slice(0, 12).replace(/[^0-9]/g, "") : "",
+                hasPartialRef: refId.length >= 4,
+                name: name,
+                careOf: careOf,
+                gender: gender,
+                dob: dob,
+                address: [house, street, landmark, location, postOffice].filter(Boolean).join(", "),
+                city: vtc || subDist || postOffice || location,
+                district: district,
+                state: state,
+                pincode: pincode
+              };
             }
-
-            if (offset === 0 && fields[0] && /^\d+$/.test(fields[0]) && fields[0].length <= 2) {
-              offset = 1;
-            }
-
-            const refId = fields[offset] || "";
-            const name = fields[offset + 1] || "";
-            const dob = fields[offset + 2] || "";
-            const gender = fields[offset + 3] || "";
-            const careOf = (fields[offset + 4] || "").replace(/^(S\/O|D\/O|W\/O|C\/O)[:\s-]*/i, "").trim();
-            const district = fields[offset + 5] || "";
-            const landmark = fields[offset + 6] || "";
-            const house = fields[offset + 7] || "";
-            const location = fields[offset + 8] || "";
-            const pincode = fields[offset + 9] || "";
-            const postOffice = fields[offset + 10] || "";
-            const state = fields[offset + 11] || "";
-            const street = fields[offset + 12] || "";
-            const subDist = fields[offset + 13] || "";
-            const vtc = fields[offset + 14] || "";
-
-            parsedData = {
-              uid: refId.length >= 12 ? refId.slice(0, 12).replace(/[^0-9]/g, "") : "",
-              hasPartialRef: refId.length >= 4,
-              name: name,
-              careOf: careOf,
-              gender: gender,
-              dob: dob,
-              address: [house, street, landmark, location, postOffice].filter(Boolean).join(", "),
-              city: vtc || subDist || postOffice || location,
-              district: district,
-              state: state,
-              pincode: pincode
-            };
           } catch (e) {
             console.warn("Secure QR decompress error:", e);
           }
@@ -1360,14 +1361,12 @@
 
         const feedback = document.getElementById("refillFeedback");
         const maskNote = (!parsedData.uid || parsedData.uid.length < 12) && parsedData.hasPartialRef
-          ? " (Please type full 12-digit ID if required)"
+          ? " (Please enter the 12-digit ID manually if needed)"
           : "";
         feedback.innerText = `✓ Aadhaar QR Scanned Successfully for "${parsedData.name}"!${maskNote}`;
         feedback.classList.remove("hidden");
-      } else {
-        if (statusMsg) {
-          statusMsg.innerText = "QR detected, but not an Aadhaar format. Make sure you scan the large Aadhaar QR code.";
-        }
+      } else if (statusMsg) {
+        statusMsg.innerText = `QR read (${trimmed.slice(0, 18)}...), but not recognized as an Aadhaar QR. Scan the large Aadhaar QR square.`;
       }
     }
 
